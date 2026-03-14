@@ -1,0 +1,344 @@
+{
+  "meta": {
+    "label": "Demo Workbench Fixture",
+    "description": "Curated demo data for presentation and UI walkthroughs."
+  },
+  "report": {
+    "report": "Police Claw Demo Report",
+    "version": "3.0.0",
+    "scan_id": "DEMO-WKS-001",
+    "timestamp": "2026-03-14 18:30:00",
+    "host": "demo-workstation",
+    "os": "Windows 11 Demo",
+    "demo_mode": true,
+    "summary": {
+      "total_checks": 8,
+      "total_risks": 6,
+      "max_risk_score": 92,
+      "domain_summary": {
+        "system": { "name": "System Control", "icon": "Shield", "total": 2, "risks": 2, "max_score": 88 },
+        "data": { "name": "Data Exfiltration", "icon": "Flow", "total": 2, "risks": 2, "max_score": 92 },
+        "model": { "name": "Model Context", "icon": "Model", "total": 1, "risks": 1, "max_score": 84 },
+        "behavior": { "name": "User Behavior", "icon": "Trail", "total": 1, "risks": 1, "max_score": 72 },
+        "audit": { "name": "Audit", "icon": "Log", "total": 2, "risks": 0, "max_score": 0 }
+      }
+    },
+    "runtime": {
+      "stats": {
+        "processes": 114,
+        "connections": 28,
+        "open_files": 43,
+        "env_signals": 3,
+        "dns_servers": ["1.1.1.1", "8.8.8.8"],
+        "outbound_count": 9,
+        "cloud_endpoints": 2,
+        "model_processes": 1
+      },
+      "result_overview": {
+        "active_signals": 6,
+        "risk_count": 6,
+        "max_risk_score": 92
+      }
+    },
+    "demo_targets": [
+      {
+        "name": "Acme Agent",
+        "display_name": "Acme Agent",
+        "type": "python-agent",
+        "vendor": "Acme",
+        "risk_level": "critical",
+        "risk_score": 92,
+        "confidence": 0.91,
+        "matched_check_ids": ["data_cloud_upload", "model_api_leak", "sys_persistence", "beh_clipboard"],
+        "pids": [4242],
+        "executable_paths": ["C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\bin\\acme-agent.py"],
+        "config_paths": ["C:\\Users\\demo\\AppData\\Roaming\\AcmeAgent"],
+        "cache_paths": ["C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\Cache"],
+        "startup_entries": [
+          {
+            "kind": "startup_file",
+            "label": "Acme Agent.lnk",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Acme Agent.lnk"
+          }
+        ],
+        "support_level": "full",
+        "remove_binary_allowed": true,
+        "target_summary": "Acme Agent is demo data for a fully supported uninstall target with process, startup, config, cache, and explicit binary scope.",
+        "rationale": "All removable paths are user-scoped demo locations with a single executable root.",
+        "planned_actions": [
+          "Terminate active processes",
+          "Remove user persistence entries",
+          "Remove config footprint",
+          "Remove cache footprint",
+          "Remove explicit binary files"
+        ],
+        "evidence_summary": "4 matched findings. confidence 91%. primary executable acme-agent.py. 1 persistence item."
+      },
+      {
+        "name": "Relaycache",
+        "display_name": "Relaycache",
+        "type": "cli-agent",
+        "vendor": "Relay",
+        "risk_level": "high",
+        "risk_score": 76,
+        "confidence": 0.74,
+        "matched_check_ids": ["data_stream"],
+        "pids": [5150],
+        "executable_paths": [],
+        "config_paths": ["C:\\Users\\demo\\AppData\\Roaming\\RelayCache"],
+        "cache_paths": ["C:\\Users\\demo\\AppData\\Local\\RelayCache\\cache"],
+        "startup_entries": [],
+        "support_level": "cleanup",
+        "remove_binary_allowed": false,
+        "remove_binary_reason": "Binary removal remains outside the safe boundary for this demo target.",
+        "target_summary": "Relaycache is demo data for a cleanup-only target with config and cache scope but no explicit safe binary file.",
+        "rationale": "The runner can clean the user-scoped footprint, but the binary path remains outside the approved delete boundary.",
+        "planned_actions": [
+          "Remove config footprint",
+          "Remove cache footprint",
+          "Preserve binary path for manual review"
+        ],
+        "evidence_summary": "1 matched finding. confidence 74%. cleanup-only footprint."
+      },
+      {
+        "name": "Ops Helper",
+        "display_name": "Ops Helper",
+        "type": "local-tool",
+        "vendor": "Demo Fixture",
+        "risk_level": "high",
+        "risk_score": 74,
+        "confidence": 0.68,
+        "matched_check_ids": ["sys_root"],
+        "pids": [6161],
+        "executable_paths": ["C:\\Users\\demo\\Documents\\OpsHelper\\ops-helper.exe"],
+        "config_paths": [],
+        "cache_paths": [],
+        "startup_entries": [],
+        "support_level": "blocked",
+        "remove_binary_allowed": false,
+        "blocked_reason_code": "path_too_broad",
+        "blocked_reason_label": "Path too broad",
+        "unsupported_reason": "Demo target overlaps a protected Documents path and stays blocked for manual review.",
+        "target_summary": "Ops Helper is demo data for a blocked target whose footprint overlaps protected user documents.",
+        "rationale": "The path lands in a protected user-data area, so automated deletion remains disabled.",
+        "planned_actions": ["Escalate to manual review"],
+        "evidence_summary": "1 matched finding. confidence 68%. path too broad."
+      }
+    ],
+    "checks": [
+      {
+        "id": "data_cloud_upload",
+        "domain": "data",
+        "domain_name": "Data Exfiltration",
+        "domain_icon": "Flow",
+        "label": "Outbound upload behavior",
+        "description": "Demo fixture showing a user-scoped agent pushing content to a cloud endpoint.",
+        "status": "Detected",
+        "detected": true,
+        "risk_score": 92,
+        "confidence": 0.91,
+        "evidence_count": 3,
+        "evidence": [
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\bin\\acme-agent.py"
+          },
+          {
+            "type": "network",
+            "endpoint": "api.demo-cloud.example",
+            "path": "C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\Cache\\queue.db"
+          },
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\AcmeAgent\\settings.json"
+          }
+        ]
+      },
+      {
+        "id": "model_api_leak",
+        "domain": "model",
+        "domain_name": "Model Context",
+        "domain_icon": "Model",
+        "label": "Prompt context leak",
+        "description": "Demo fixture showing the same agent preparing model API requests.",
+        "status": "Detected",
+        "detected": true,
+        "risk_score": 84,
+        "confidence": 0.87,
+        "evidence_count": 2,
+        "evidence": [
+          {
+            "type": "api_endpoint",
+            "endpoint": "api.demo-llm.example",
+            "path": "C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\bin\\acme-agent.py"
+          },
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\AcmeAgent\\prompts\\latest.txt"
+          }
+        ]
+      },
+      {
+        "id": "sys_persistence",
+        "domain": "system",
+        "domain_name": "System Control",
+        "domain_icon": "Shield",
+        "label": "User persistence entry",
+        "description": "Demo fixture showing startup persistence tied to the same agent.",
+        "status": "Detected",
+        "detected": true,
+        "risk_score": 88,
+        "confidence": 0.89,
+        "evidence_count": 2,
+        "evidence": [
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Acme Agent.lnk"
+          },
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\AcmeAgent\\settings.json"
+          }
+        ]
+      },
+      {
+        "id": "beh_clipboard",
+        "domain": "behavior",
+        "domain_name": "User Behavior",
+        "domain_icon": "Trail",
+        "label": "Clipboard monitor",
+        "description": "Demo fixture showing clipboard tracking by the same agent.",
+        "status": "Detected",
+        "detected": true,
+        "risk_score": 72,
+        "confidence": 0.78,
+        "evidence_count": 2,
+        "evidence": [
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\Cache\\clipboard.log"
+          },
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\AcmeAgent\\settings.json"
+          }
+        ]
+      },
+      {
+        "id": "data_stream",
+        "domain": "data",
+        "domain_name": "Data Exfiltration",
+        "domain_icon": "Flow",
+        "label": "Background relay stream",
+        "description": "Demo fixture showing a cleanup-only relay footprint with cache and config evidence.",
+        "status": "Detected",
+        "detected": true,
+        "risk_score": 76,
+        "confidence": 0.74,
+        "evidence_count": 3,
+        "evidence": [
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Local\\RelayCache\\cache\\relay.db"
+          },
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\AppData\\Roaming\\RelayCache\\config.json"
+          },
+          {
+            "type": "network",
+            "endpoint": "relay.demo-bus.example",
+            "path": "C:\\Users\\demo\\AppData\\Local\\RelayCache\\cache\\relay.db"
+          }
+        ]
+      },
+      {
+        "id": "sys_root",
+        "domain": "system",
+        "domain_name": "System Control",
+        "domain_icon": "Shield",
+        "label": "Protected path overlap",
+        "description": "Demo fixture showing a target that overlaps protected user data and remains blocked.",
+        "status": "Detected",
+        "detected": true,
+        "risk_score": 74,
+        "confidence": 0.68,
+        "evidence_count": 2,
+        "evidence": [
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\Documents\\OpsHelper\\ops-helper.exe"
+          },
+          {
+            "type": "file",
+            "path": "C:\\Users\\demo\\Documents\\OpsHelper\\notes.txt"
+          }
+        ]
+      },
+      {
+        "id": "audit_system",
+        "domain": "audit",
+        "domain_name": "Audit",
+        "domain_icon": "Log",
+        "label": "Audit path healthy",
+        "description": "Demo fixture for a healthy audit baseline.",
+        "status": "Clear",
+        "detected": false,
+        "risk_score": 0,
+        "confidence": 0.95,
+        "evidence_count": 0,
+        "evidence": []
+      },
+      {
+        "id": "audit_log_tamper",
+        "domain": "audit",
+        "domain_name": "Audit",
+        "domain_icon": "Log",
+        "label": "Log tamper",
+        "description": "Demo fixture keeps one audit check clear.",
+        "status": "Clear",
+        "detected": false,
+        "risk_score": 0,
+        "confidence": 0.93,
+        "evidence_count": 0,
+        "evidence": []
+      }
+    ]
+  },
+  "uninstall_history": [
+    {
+      "target_display_name": "Acme Agent",
+      "status": "success",
+      "duration_ms": 1420,
+      "removed_items": [
+        { "type": "process", "value": "4242", "detail": "Stopped demo runtime process." },
+        { "type": "startup_file", "value": "Acme Agent.lnk", "detail": "Removed demo startup entry." },
+        { "type": "config", "value": "C:\\Users\\demo\\AppData\\Roaming\\AcmeAgent", "detail": "Removed demo config root." },
+        { "type": "cache", "value": "C:\\Users\\demo\\AppData\\Local\\AcmeAgent\\Cache", "detail": "Removed demo cache root." }
+      ],
+      "logs": [
+        { "level": "info", "message": "Demo seed: target footprint verified.", "at": "2026-03-14T18:31:00" },
+        { "level": "info", "message": "Demo seed: cleanup completed without leftovers.", "at": "2026-03-14T18:31:01" }
+      ]
+    },
+    {
+      "target_display_name": "Relaycache",
+      "status": "partial",
+      "duration_ms": 1180,
+      "removed_items": [
+        { "type": "cache", "value": "C:\\Users\\demo\\AppData\\Local\\RelayCache\\cache", "detail": "Removed relay cache." }
+      ],
+      "preserved_items": [
+        { "type": "binary", "value": "Binary preserved", "detail": "No explicit safe binary path was available." }
+      ],
+      "leftover_items": [
+        { "type": "config", "value": "C:\\Users\\demo\\AppData\\Roaming\\RelayCache\\config.json", "detail": "Manual review required before removing the remaining config." }
+      ],
+      "logs": [
+        { "level": "info", "message": "Demo seed: relay cache removed.", "at": "2026-03-14T18:32:10" },
+        { "level": "warning", "message": "Demo seed: config file preserved for manual review.", "at": "2026-03-14T18:32:11" }
+      ],
+      "error": "Binary removal was intentionally skipped in the demo fixture."
+    }
+  ]
+}

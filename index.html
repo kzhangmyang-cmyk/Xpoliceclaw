@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xpoliceclaw Architecture</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f7f3ea;
+      --canvas: linear-gradient(135deg, #f7f3ea 0%, #eef5f1 45%, #f9efe5 100%);
+      --panel: rgba(255, 252, 247, 0.88);
+      --ink: #182026;
+      --muted: #56616b;
+      --line: rgba(24, 32, 38, 0.12);
+      --teal: #0f766e;
+      --teal-soft: rgba(15, 118, 110, 0.12);
+      --amber: #b45309;
+      --amber-soft: rgba(180, 83, 9, 0.12);
+      --navy: #1d3557;
+      --rose: #c2410c;
+      --shadow: 0 18px 60px rgba(25, 35, 43, 0.12);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "Segoe UI Variable", "PingFang SC", sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1200px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 34%),
+        radial-gradient(circle at top right, rgba(180, 83, 9, 0.14), transparent 32%),
+        rgba(255, 252, 247, 0.8);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      animation: rise 0.55s ease both;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 12px;
+      font-size: clamp(2.2rem, 4vw, 4.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      max-width: 10ch;
+    }
+
+    .hero p {
+      margin-top: 12px;
+      max-width: 62ch;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 14px;
+      background: rgba(29, 53, 87, 0.08);
+      color: var(--navy);
+      border-radius: 999px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .project-note {
+      display: grid;
+      gap: 12px;
+    }
+
+    .note-card {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .note-card strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .note-card p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: 0 12px 30px rgba(25, 35, 43, 0.05);
+      animation: rise 0.55s ease both;
+    }
+
+    .stat-card:nth-child(2) { animation-delay: 0.06s; }
+    .stat-card:nth-child(3) { animation-delay: 0.12s; }
+    .stat-card:nth-child(4) { animation-delay: 0.18s; }
+
+    .stat-card strong {
+      display: block;
+      font-size: 2rem;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      animation: rise 0.65s ease both;
+    }
+
+    .section-head {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(1.5rem, 2vw, 2.1rem);
+      letter-spacing: -0.04em;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 70ch;
+    }
+
+    .flow-shell {
+      display: grid;
+      gap: 18px;
+      padding: 12px 0 4px;
+    }
+
+    .flow-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .flow-branches {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding-top: 18px;
+    }
+
+    .flow-branch-line {
+      position: absolute;
+      top: 0;
+      left: 16.66%;
+      right: 16.66%;
+      height: 18px;
+      border-top: 1px solid rgba(24, 32, 38, 0.26);
+      border-left: 1px solid rgba(24, 32, 38, 0.26);
+      border-right: 1px solid rgba(24, 32, 38, 0.26);
+      border-radius: 16px 16px 0 0;
+      pointer-events: none;
+    }
+
+    .flow-node {
+      padding: 14px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 8px 22px rgba(25, 35, 43, 0.05);
+      min-width: 120px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .flow-node-strong {
+      background: linear-gradient(180deg, rgba(29, 53, 87, 0.1), rgba(29, 53, 87, 0.03));
+      border-color: rgba(29, 53, 87, 0.18);
+      font-weight: 700;
+    }
+
+    .flow-node-wide {
+      min-width: 220px;
+      font-weight: 700;
+    }
+
+    .flow-arrow {
+      font-size: 22px;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .module-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .module-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.74);
+      overflow: hidden;
+    }
+
+    .module-card summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px;
+    }
+
+    .module-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .module-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .module-head h3 {
+      margin-top: 10px;
+      font-size: 1.3rem;
+      letter-spacing: -0.03em;
+    }
+
+    .module-line {
+      color: var(--muted);
+      font-size: 13px;
+      font-family: "IBM Plex Mono", monospace;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+
+    .module-card p {
+      padding: 0 18px 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .chip-teal {
+      color: var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .chip-amber {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .module-list {
+      border-top: 1px solid var(--line);
+      padding: 14px 18px 18px;
+    }
+
+    .module-list ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      display: grid;
+      gap: 6px;
+    }
+
+    .callout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .callout {
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .callout p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .snippet-grid {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .snippet-card {
+      display: grid;
+      gap: 14px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .snippet-card h3 {
+      font-size: 1.2rem;
+      letter-spacing: -0.03em;
+      margin-top: 6px;
+    }
+
+    .snippet-card p {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-top: 8px;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      padding: 18px;
+      border-radius: 18px;
+      background: #1d2430;
+      color: #ecf3fb;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .grid-two,
+      .callout-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100vw - 20px, 100%);
+        padding-top: 14px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-branches {
+        grid-template-columns: 1fr;
+        padding-top: 0;
+      }
+
+      .flow-branch-line {
+        display: none;
+      }
+
+      .module-head {
+        flex-direction: column;
+      }
+
+      .module-line {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-kicker">Xpoliceclaw / Source-Driven Architecture View</div>
+          <span class="eyebrow">Generated From Real Files</span>
+          <h1>Police Claw 的源码架构站点</h1>
+          <p>
+            这个页面直接从仓库里的 <code>police_claw_v3.py</code> 和
+            <code>Police_Claw_v3_Dashboard.jsx</code> 提取结构信息，展示真实的后端执行链、
+            React 组件结构，以及几个最关键的代码片段。
+          </p>
+        </div>
+
+        <div class="project-note">
+          <div class="note-card">
+            <strong>后端是真正的扫描引擎</strong>
+            <p>Python 文件包含 Collector、Monitor、Signal、Risk、Report 全链路，可独立生成 JSON 和 DOCX 报告。</p>
+          </div>
+          <div class="note-card">
+            <strong>前端当前是展示层</strong>
+            <p>React 文件通过 <code>simulate()</code> 和 <code>startScan()</code> 模拟结果，没有直接调用 Python 输出。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats">
+      <article class="stat-card">
+        <strong>42</strong>
+        <span>后端检查项数量，来自 <code>CHECK_ITEMS</code>。</span>
+      </article>
+      <article class="stat-card">
+        <strong>7</strong>
+        <span>安全域数量，Python 与 React 都复用了同一套概念。</span>
+      </article>
+      <article class="stat-card">
+        <strong>909</strong>
+        <span>police_claw_v3.py 的代码行数。</span>
+      </article>
+      <article class="stat-card">
+        <strong>348</strong>
+        <span>Police_Claw_v3_Dashboard.jsx 的代码行数。</span>
+      </article>
+    </section>
+
+    
+    <section class="panel">
+      <div class="section-head">
+        <span class="eyebrow">Execution Flow</span>
+        <h2>核心调用链</h2>
+        <p>真实执行链只存在于 Python。React 页面对这条链路做了 UI 复刻，但当前仍是本地模拟。</p>
+      </div>
+
+      <div class="flow-shell">
+        <div class="flow-row">
+          <div class="flow-node flow-node-strong">CLI / main()</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-node-strong">Collector</div>
+        </div>
+
+        <div class="flow-branches">
+          <div class="flow-branch-line"></div>
+          <div class="flow-node">TrafficMonitor</div>
+          <div class="flow-node">FSMonitor</div>
+          <div class="flow-node">ModelMonitor</div>
+        </div>
+
+        <div class="flow-row">
+          <div class="flow-node flow-node-wide">SignalEngine</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">RiskEngine</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">ReportWriter</div>
+        </div>
+      </div>
+    </section>
+    
+
+    <section class="grid-two">
+      <article class="panel">
+        <div class="section-head">
+          <span class="eyebrow">Backend</span>
+          <h2>Python 引擎模块</h2>
+          <p>
+            共提取到 8 个顶层定义。
+            其中类 7 个，入口函数 1 个。
+          </p>
+        </div>
+        <div class="module-stack">
+          
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>Collector</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 233</div>
+        </div>
+      </summary>
+      <p>采集进程、网络连接、打开文件、环境变量和 DNS，作为扫描上下文的唯一入口。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>__init__()</li><li>collect_all()</li><li>_collect_processes()</li><li>_collect_connections()</li><li>_collect_env()</li><li>_collect_dns()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>TrafficMonitor</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 321</div>
+        </div>
+      </summary>
+      <p>从连接数据中提取外连数量、云端端点、模型 API 端点和 DNS 异常。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>__init__()</li><li>analyze()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>FSMonitor</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 371</div>
+        </div>
+      </summary>
+      <p>按敏感路径分区检测文件访问，聚焦钱包、SSH、Cookie、证书和备份。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>__init__()</li><li>analyze()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>ModelMonitor</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 402</div>
+        </div>
+      </summary>
+      <p>识别模型相关进程、Embedding/Fine-tune 行为和 Prompt 文件。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>__init__()</li><li>analyze()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>SignalEngine</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 439</div>
+        </div>
+      </summary>
+      <p>把采集结果映射成 42 项安全信号，是规则层的核心。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>__init__()</li><li>_match_proc()</li><li>_match_files()</li><li>_match_env()</li><li>analyze()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>RiskEngine</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 586</div>
+        </div>
+      </summary>
+      <p>为每个检查项计算风险分、状态和置信度，并叠加安全域权重。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>evaluate()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">class</span>
+            <h3>ReportWriter</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 635</div>
+        </div>
+      </summary>
+      <p>把最终结果落成 JSON 和 DOCX 报告，并输出分域汇总。</p>
+      <div class="module-list"><div class="eyebrow">Methods</div><ul><li>__init__()</li><li>_domain_summary()</li><li>write_json()</li><li>write_docx()</li></ul></div>
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-teal">function</span>
+            <h3>main</h3>
+          </div>
+          <div class="module-line">police_claw_v3.py : 818</div>
+        </div>
+      </summary>
+      <p>串起 6 个阶段，负责控制台输出、统计汇总和报告写入。</p>
+      
+    </details>
+    
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="section-head">
+          <span class="eyebrow">Frontend</span>
+          <h2>React 展示层模块</h2>
+          <p>
+            共提取到 5 个函数/组件定义。
+            同时识别到 7 个前端安全域配置和 42 个前端检查项配置。
+          </p>
+        </div>
+        <div class="module-stack">
+          
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-amber">function</span>
+            <h3>simulate</h3>
+          </div>
+          <div class="module-line">Police_Claw_v3_Dashboard.jsx : 58</div>
+        </div>
+      </summary>
+      <p>生成前端演示数据，不依赖 Python 扫描结果。</p>
+      
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-amber">function</span>
+            <h3>Bar</h3>
+          </div>
+          <div class="module-line">Police_Claw_v3_Dashboard.jsx : 71</div>
+        </div>
+      </summary>
+      <p>渲染风险分条形图，负责颜色和分数动画。</p>
+      
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-amber">function</span>
+            <h3>DomainCard</h3>
+          </div>
+          <div class="module-line">Police_Claw_v3_Dashboard.jsx : 81</div>
+        </div>
+      </summary>
+      <p>按安全域展开显示检查项、状态、风险分和证据数量。</p>
+      
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-amber">component</span>
+            <h3>PoliceClaw</h3>
+          </div>
+          <div class="module-line">Police_Claw_v3_Dashboard.jsx : 158</div>
+        </div>
+      </summary>
+      <p>页面入口组件，驱动扫描状态、阶段文案和结果汇总展示。</p>
+      
+    </details>
+    
+    <details class="module-card" open>
+      <summary>
+        <div class="module-head">
+          <div>
+            <span class="chip chip-amber">handler</span>
+            <h3>startScan</h3>
+          </div>
+          <div class="module-line">Police_Claw_v3_Dashboard.jsx : 174</div>
+        </div>
+      </summary>
+      <p>组件内部的扫描状态机，按阶段推进进度条并在完成后注入模拟结果。</p>
+      
+    </details>
+    
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="eyebrow">Architecture Notes</span>
+        <h2>当前系统边界</h2>
+        <p>页面除了画结构，也把现在真正存在的架构边界讲清楚，避免把演示层误判成生产链路。</p>
+      </div>
+
+      <div class="callout-grid">
+        <article class="callout">
+          <strong>真实执行链</strong>
+          <p>命令行进入 <code>main()</code> 后，按 6 个阶段执行采集、分析、信号识别、评分和报告生成。风险结论以 Python 结果为准。</p>
+        </article>
+        <article class="callout">
+          <strong>当前断点</strong>
+          <p>React 页面没有读取 <code>Police_Claw_v3_Report.json</code>，所以页面里的风险结果属于本地模拟，不是扫描实况。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="eyebrow">Code Highlights</span>
+        <h2>关键代码片段</h2>
+        <p>下面的内容不是手写摘要，而是从源码按行截取的真实片段，方便你快速核对调用链。</p>
+      </div>
+      <div class="snippet-grid">
+        
+    <article class="snippet-card">
+      <div class="snippet-meta">
+        <span class="eyebrow">police_claw_v3.py</span>
+        <h3>主流程编排</h3>
+        <p>Python 扫描的控制入口，能直接看出阶段顺序。</p>
+      </div>
+      <pre><code> 833 |     # Phase 1: Collect
+ 834 |     print(&quot;[1/6] 采集系统数据...&quot;)
+ 835 |     collector = Collector().collect_all()
+ 836 |     print(f&quot;      ├─ 进程: {len(collector.processes)}&quot;)
+ 837 |     print(f&quot;      ├─ 连接: {len(collector.connections)}&quot;)
+ 838 |     print(f&quot;      ├─ 文件: {len(collector.open_files)}&quot;)
+ 839 |     print(f&quot;      ├─ 环境: {len(collector.env_signals)}&quot;)
+ 840 |     print(f&quot;      └─ DNS:  {collector.dns_servers}&quot;)
+ 841 | 
+ 842 |     # Phase 2: Traffic
+ 843 |     print(&quot;[2/6] 网络流量分析...&quot;)
+ 844 |     traffic = TrafficMonitor(collector).analyze()
+ 845 |     print(f&quot;      ├─ 外传连接: {traffic[&#x27;outbound_count&#x27;]}&quot;)
+ 846 |     print(f&quot;      ├─ 云端端点: {len(traffic[&#x27;cloud_endpoints&#x27;])}&quot;)
+ 847 |     print(f&quot;      └─ 模型API:  {len(traffic[&#x27;model_api_endpoints&#x27;])}&quot;)
+ 848 | 
+ 849 |     # Phase 3: FS
+ 850 |     print(&quot;[3/6] 文件系统监控...&quot;)
+ 851 |     fs_data = FSMonitor(collector).analyze()
+ 852 |     zones_hit = sum(1 for v in fs_data.values() if v)
+ 853 |     print(f&quot;      └─ 敏感区域命中: {zones_hit}/{len(FSMonitor.SENSITIVE_ZONES)}&quot;)
+ 854 | 
+ 855 |     # Phase 4: Model
+ 856 |     print(&quot;[4/6] 模型 API 检测...&quot;)
+ 857 |     model_data = ModelMonitor(collector, traffic).analyze()
+ 858 |     print(f&quot;      ├─ AI 进程:   {len(model_data[&#x27;model_procs&#x27;])}&quot;)
+ 859 |     print(f&quot;      ├─ Embedding:  {len(model_data[&#x27;embedding_procs&#x27;])}&quot;)
+ 860 |     print(f&quot;      └─ Prompt 文件: {len(model_data[&#x27;prompt_files&#x27;])}&quot;)
+ 861 | 
+ 862 |     # Phase 5: Signal + Risk
+ 863 |     print(&quot;[5/6] 信号识别 &amp; 风险评估...&quot;)
+ 864 |     signals = SignalEngine(collector, traffic, fs_data, model_data).analyze()
+ 865 |     active = sum(1 for v in signals.values() if v)
+ 866 |     print(f&quot;      └─ 活跃信号: {active}/{len(signals)}&quot;)
+ 867 | 
+ 868 |     results = RiskEngine().evaluate(signals)
+ 869 |     risks = sum(1 for r in results if r[&quot;detected&quot;]
+ 870 |                 and r[&quot;id&quot;] not in (&quot;audit_system&quot;,))
+ 871 |     print(f&quot;      └─ 风险项: {risks}/{len(results)}&quot;)
+ 872 | 
+ 873 |     # Phase 6: Report
+ 874 |     print(&quot;[6/6] 生成报告...&quot;)
+ 875 |     writer = ReportWriter(results, out)
+ 876 |     jp = writer.write_json()
+ 877 |     print(f&quot;      ├─ JSON: {jp}&quot;)
+ 878 |     dp = writer.write_docx()
+ 879 |     print(f&quot;      └─ DOCX: {dp or &#x27;skipped&#x27;}&quot;)</code></pre>
+    </article>
+    
+    <article class="snippet-card">
+      <div class="snippet-meta">
+        <span class="eyebrow">police_claw_v3.py</span>
+        <h3>Signal Engine 规则层</h3>
+        <p>42 项信号在这里落地，是整个引擎的决策中心。</p>
+      </div>
+      <pre><code> 469 |     def analyze(self) -&gt; dict:
+ 470 |         S = {}
+ 471 | 
+ 472 |         # ── Credential Domain ──
+ 473 |         S[&quot;cred_password&quot;]  = self._match_files(KW[&quot;passwords&quot;]) + \
+ 474 |                               self._match_proc([&quot;keylog&quot;, &quot;mimikatz&quot;, &quot;lazagne&quot;, &quot;credential_dump&quot;])
+ 475 |         S[&quot;cred_ssh_keys&quot;]  = self._match_files(KW[&quot;ssh&quot;])
+ 476 |         S[&quot;cred_api_tokens&quot;]= self._match_files(KW[&quot;api_tokens&quot;]) + \
+ 477 |                               self._match_env([&quot;API_KEY&quot;, &quot;SECRET&quot;, &quot;TOKEN&quot;])
+ 478 |         S[&quot;cred_cookies&quot;]   = self._match_files(KW[&quot;cookies&quot;])
+ 479 |         S[&quot;cred_wallet&quot;]    = self._match_files(KW[&quot;wallet&quot;]) + \
+ 480 |                               [{&quot;type&quot;: &quot;fs_monitor&quot;, &quot;zone&quot;: &quot;wallet&quot;, &quot;paths&quot;: self.fs.get(&quot;wallet&quot;, [])}] \
+ 481 |                               if self.fs.get(&quot;wallet&quot;) else self._match_files(KW[&quot;wallet&quot;])
+ 482 |         S[&quot;cred_2fa&quot;]       = self._match_files(KW[&quot;2fa&quot;])
+ 483 |         S[&quot;cred_cert&quot;]      = self._match_files(KW[&quot;certs&quot;]) + \
+ 484 |                               [{&quot;type&quot;: &quot;fs_monitor&quot;, &quot;zone&quot;: &quot;cert&quot;, &quot;paths&quot;: self.fs.get(&quot;cert&quot;, [])}] \
+ 485 |                               if self.fs.get(&quot;cert&quot;) else self._match_files(KW[&quot;certs&quot;])
+ 486 | 
+ 487 |         # ── Transaction Domain ──
+ 488 |         S[&quot;txn_unauthorized&quot;]= self._match_proc(KW[&quot;trade&quot;])
+ 489 |         S[&quot;txn_crypto&quot;]      = [{&quot;type&quot;: &quot;network&quot;, &quot;endpoint&quot;: ep}
+ 490 |                                 for ep in self.traffic.get(&quot;cloud_endpoints&quot;, [])
+ 491 |                                 if any(x in ep for x in [&quot;binance&quot;, &quot;coinbase&quot;, &quot;kraken&quot;, &quot;dex&quot;])]
+ 492 |         S[&quot;txn_payment&quot;]     = self._match_proc([&quot;payment&quot;, &quot;stripe&quot;, &quot;paypal&quot;, &quot;alipay&quot;, &quot;wechat_pay&quot;])
+ 493 |         S[&quot;txn_mining&quot;]      = self._match_proc(KW[&quot;mining&quot;])
+ 494 | 
+ 495 |         # ── Behavior Domain ──
+ 496 |         S[&quot;beh_search&quot;]      = self._match_files(KW[&quot;search&quot;])
+ 497 |         S[&quot;beh_code&quot;]        = self._match_files(KW[&quot;code&quot;])
+ 498 |         S[&quot;beh_debug&quot;]       = self._match_proc(KW[&quot;debug&quot;]) + self._match_files(KW[&quot;debug&quot;])
+ 499 |         S[&quot;beh_keylog&quot;]      = self._match_proc(KW[&quot;keylog&quot;])
+ 500 |         S[&quot;beh_screen&quot;]      = self._match_proc(KW[&quot;screen&quot;])
+ 501 |         S[&quot;beh_clipboard&quot;]   = self._match_proc(KW[&quot;clipboard&quot;])
+ 502 |         S[&quot;beh_operation_log&quot;]= self._match_proc([&quot;activity_monitor&quot;, &quot;input_log&quot;, &quot;user_track&quot;])
+ 503 | 
+ 504 |         # ── System Domain ──
+ 505 |         sys_elevated = []
+ 506 |         for p in self.c.processes:
+ 507 |             if p[&quot;username&quot;] in (&quot;root&quot;, &quot;SYSTEM&quot;, &quot;NT AUTHORITY\\SYSTEM&quot;):
+ 508 |                 if any(ai in p[&quot;name&quot;] for ai in KW[&quot;ai_proc&quot;]):
+ 509 |                     sys_elevated.append({&quot;type&quot;: &quot;elevated_ai&quot;, &quot;pid&quot;: p[&quot;pid&quot;],
+ 510 |                                          &quot;name&quot;: p[&quot;name&quot;], &quot;user&quot;: p[&quot;username&quot;]})
+ 511 |         S[&quot;sys_root&quot;]        = sys_elevated
+ 512 |         S[&quot;sys_persistence&quot;] = self._match_proc(KW[&quot;persist&quot;]) + self._match_files(KW[&quot;persist&quot;])
+ 513 |         S[&quot;sys_process_inject&quot;]= self._match_proc(KW[&quot;inject&quot;])
+ 514 |         S[&quot;sys_driver&quot;]      = self._match_proc([&quot;insmod&quot;, &quot;modprobe&quot;, &quot;kext&quot;, &quot;driver_load&quot;])
+ 515 |         S[&quot;sys_firewall&quot;]    = self._match_proc([&quot;iptables&quot;, &quot;ufw&quot;, &quot;netsh&quot;, &quot;firewall&quot;, &quot;nftables&quot;])
+ 516 |         S[&quot;sys_dns&quot;]         = [{&quot;type&quot;: &quot;dns_anomaly&quot;, &quot;servers&quot;: self.c.dns_servers}] \
+ 517 |                                if self.traffic.get(&quot;dns_anomaly&quot;) else []
+ 518 | 
+ 519 |         # ── Data Domain ──
+ 520 |         S[&quot;data_file_read&quot;]  = self._match_files(KW[&quot;private&quot;])
+ 521 |         S[&quot;data_file_content&quot;]= self._match_proc([&quot;file_index&quot;, &quot;text_extract&quot;, &quot;ocr&quot;,
+ 522 |                                                     &quot;pdf_parse&quot;, &quot;doc_scan&quot;, &quot;content_scan&quot;])
+ 523 |         S[&quot;data_cloud_upload&quot;]= self._match_proc(KW[&quot;cloud&quot;] + KW[&quot;upload_cmd&quot;]) + \
+ 524 |                                 [{&quot;type&quot;: &quot;traffic&quot;, &quot;endpoints&quot;: self.traffic.get(&quot;cloud_endpoints&quot;, [])}] \
+ 525 |                                 if self.traffic.get(&quot;cloud_endpoints&quot;) else \
+ 526 |                                 self._match_proc(KW[&quot;cloud&quot;] + KW[&quot;upload_cmd&quot;])
+ 527 |         idle_exfil = []
+ 528 |         for p in self.c.processes:
+ 529 |             if p[&quot;status&quot;] in (&quot;sleeping&quot;, &quot;idle&quot;):
+ 530 |                 for conn in self.c.connections:
+ 531 |                     if conn[&quot;pid&quot;] == p[&quot;pid&quot;] and conn[&quot;remote&quot;] and conn[&quot;status&quot;] == &quot;ESTABLISHED&quot;:
+ 532 |                         idle_exfil.append({&quot;type&quot;: &quot;idle_network&quot;, &quot;pid&quot;: p[&quot;pid&quot;],
+ 533 |                                            &quot;name&quot;: p[&quot;name&quot;], &quot;remote&quot;: conn[&quot;remote&quot;]})
+ 534 |         S[&quot;data_idle_exfil&quot;] = idle_exfil
+ 535 |         S[&quot;data_stream&quot;]     = self._match_proc(KW[&quot;telemetry&quot;])
+ 536 |         if self.traffic.get(&quot;outbound_count&quot;, 0) &gt; 80:
+ 537 |             S[&quot;data_stream&quot;].append({&quot;type&quot;: &quot;high_outbound&quot;,
+ 538 |                                      &quot;count&quot;: self.traffic[&quot;outbound_count&quot;]})
+ 539 |         S[&quot;data_dns_tunnel&quot;] = self._match_proc(KW[&quot;dns_tunnel&quot;])
+ 540 |         S[&quot;data_steganography&quot;]= self._match_proc([&quot;steghide&quot;, &quot;openstego&quot;, &quot;steg_&quot;,
+ 541 |                                                      &quot;outguess&quot;, &quot;snow_steg&quot;])
+ 542 |         S[&quot;data_usb&quot;]        = self._match_proc([&quot;usb_copy&quot;, &quot;mass_storage&quot;,
+ 543 |                                                    &quot;removable&quot;, &quot;udisk&quot;])
+ 544 |         S[&quot;data_backup_exfil&quot;]= self._match_files(KW[&quot;backup&quot;])
+ 545 | 
+ 546 |         # ── Model Domain ──
+ 547 |         S[&quot;model_context&quot;]   = [{&quot;type&quot;: &quot;model_proc&quot;, **m}
+ 548 |                                 for m in self.model.get(&quot;model_procs&quot;, [])]
+ 549 |         S[&quot;model_prompt&quot;]    = [{&quot;type&quot;: &quot;prompt_file&quot;, &quot;path&quot;: p}
+ 550 |                                 for p in self.model.get(&quot;prompt_files&quot;, [])]
+ 551 |         S[&quot;model_finetune&quot;]  = [{&quot;type&quot;: &quot;finetune_proc&quot;, **m}
+ 552 |                                 for m in self.model.get(&quot;finetune_procs&quot;, [])]
+ 553 |         S[&quot;model_embedding&quot;] = [{&quot;type&quot;: &quot;embedding_proc&quot;, **m}
+ 554 |                                 for m in self.model.get(&quot;embedding_procs&quot;, [])]
+ 555 |         S[&quot;model_api_leak&quot;]  = [{&quot;type&quot;: &quot;api_endpoint&quot;, &quot;endpoint&quot;: ep}
+ 556 |                                 for ep in self.model.get(&quot;api_connections&quot;, [])]
+ 557 | 
+ 558 |         # ── Audit Domain ──
+ 559 |         S[&quot;audit_system&quot;]    = self._match_proc(KW[&quot;audit&quot;]) + self._match_files(KW[&quot;audit&quot;])
+ 560 |         S[&quot;audit_log_tamper&quot;]= self._match_proc([&quot;log_delete&quot;, &quot;log_truncate&quot;,
+ 561 |                                                    &quot;shred&quot;, &quot;wipe_log&quot;])
+ 562 |         # Compliance: check if any data protection markers exist
+ 563 |         S[&quot;audit_compliance&quot;]= []  # passive — flagged if no audit + data risks
+ 564 |         S[&quot;audit_leak_risk&quot;] = []  # computed below
+ 565 | 
+ 566 |         # Composite leak risk
+ 567 |         active = sum(1 for k, v in S.items()
+ 568 |                      if v and not k.startswith(&quot;audit&quot;))
+ 569 |         if active &gt;= 5:
+ 570 |             S[&quot;audit_leak_risk&quot;].append({
+ 571 |                 &quot;type&quot;: &quot;composite&quot;,
+ 572 |                 &quot;active_categories&quot;: active,
+ 573 |                 &quot;detail&quot;: f&quot;{active} 个安全类目同时触发，数据泄露风险极高&quot;,
+ 574 |             })
+ 575 |         if not S[&quot;audit_system&quot;] and active &gt;= 2:
+ 576 |             S[&quot;audit_compliance&quot;].append({
+ 577 |                 &quot;type&quot;: &quot;no_audit_with_risks&quot;,
+ 578 |                 &quot;detail&quot;: &quot;无安全审计体系但检测到多项风险信号&quot;,
+ 579 |             })
+ 580 | 
+ 581 |         return S</code></pre>
+    </article>
+    
+    <article class="snippet-card">
+      <div class="snippet-meta">
+        <span class="eyebrow">Police_Claw_v3_Dashboard.jsx</span>
+        <h3>前端扫描状态机</h3>
+        <p>React 页面通过 `startScan()` 模拟进度和结果切换。</p>
+      </div>
+      <pre><code> 174 |   function startScan() {
+ 175 |     setPhase(&quot;scanning&quot;); setProgress(0); setResults([]); setAnimate(false); setExpandedDoms({});
+ 176 |     let p = 0, si = 0;
+ 177 |     setStage(stages[0]);
+ 178 |     ivRef.current = setInterval(() =&gt; {
+ 179 |       p += Math.random() * 5 + 1.5;
+ 180 |       const newSi = Math.min(stages.length - 1, Math.floor((p / 100) * stages.length));
+ 181 |       if (newSi !== si) { si = newSi; setStage(stages[si]); }
+ 182 |       if (p &gt;= 100) {
+ 183 |         clearInterval(ivRef.current);
+ 184 |         setProgress(100); setStage(&quot;完成&quot;);
+ 185 |         setTimeout(() =&gt; {
+ 186 |           setResults(simulate()); setPhase(&quot;done&quot;);
+ 187 |           setTimeout(() =&gt; setAnimate(true), 80);
+ 188 |         }, 300);
+ 189 |       } else setProgress(Math.min(p, 99));
+ 190 |     }, 100);
+ 191 |   }
+ 192 | 
+ 193 |   useEffect(() =&gt; () =&gt; clearInterval(ivRef.current), []);
+ 194 | 
+ 195 |   const byDomain = {};
+ 196 |   DOMAINS.forEach(d =&gt; byDomain[d.id] = []);
+ 197 |   results.forEach(r =&gt; byDomain[r.dom]?.push(r));
+ 198 | 
+ 199 |   const totalRisks = results.filter(r =&gt; r.id === &quot;audit_sys&quot; ? !r.detected : r.detected).length;
+ 200 |   const maxRisk = results.length ? Math.max(...results.map(r =&gt; r.risk)) : 0;
+ 201 |   const grade = totalRisks === 0 ? { l: &quot;安全&quot;, c: &quot;#22c55e&quot;, b: &quot;rgba(34,197,94,0.08)&quot; }
+ 202 |     : totalRisks &lt;= 5 ? { l: &quot;警告&quot;, c: &quot;#f59e0b&quot;, b: &quot;rgba(245,158,11,0.08)&quot; }
+ 203 |     : { l: &quot;危险&quot;, c: &quot;#ef4444&quot;, b: &quot;rgba(239,68,68,0.08)&quot; };</code></pre>
+    </article>
+    
+      </div>
+    </section>
+
+    <p class="footer">
+      Generated at 2026-03-14 00:44:44 · Files: police_claw_v3.py, Police_Claw_v3_Dashboard.jsx
+    </p>
+  </main>
+</body>
+</html>

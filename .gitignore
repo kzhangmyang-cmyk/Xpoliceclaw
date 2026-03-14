@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+data/
+reports/
+tmp_scan_output/
+*.log
+Police_Claw_v3_Product_Manual.docx
