@@ -218,3 +218,5 @@ For a stable walkthrough:
 - tighten noisy scan heuristics in `police_claw_v3.py`
 - improve target inference precision for mixed toolchains
 - expand safe persistence coverage without widening delete boundaries
+
+# Xpoliceclaw
