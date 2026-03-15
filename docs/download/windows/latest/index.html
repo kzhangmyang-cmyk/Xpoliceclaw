@@ -2,11 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Redirecting to Police Claw download</title>
+  <title>Police Claw Windows Download</title>
   <script>
-    window.location.replace("https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe");
+    (async () => {
+      try {
+        const response = await fetch("./manifest.json", { headers: { Accept: "application/json" } });
+        const manifest = await response.json();
+        if (manifest.available && manifest.download_url) {
+          window.location.replace(manifest.download_url);
+        }
+      } catch (error) {}
+    })();
   </script>
 </head>
 <body>

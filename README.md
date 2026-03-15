@@ -129,6 +129,32 @@ Optional:
 .\tools\build_release.ps1 -WithWebview
 ```
 
+### Build A macOS Release Archive
+
+Requirements:
+
+- macOS build host
+- Python `3.11+`
+- PyInstaller-capable local environment
+
+Run this on macOS:
+
+```bash
+./tools/build_release_macos.sh
+```
+
+That script creates:
+
+- `dist/release/PoliceClaw-macOS-<version>.zip`
+- `dist/release/PoliceClaw-macOS-latest.zip`
+- `docs/download/macos/latest/manifest.json`
+
+If you want the app bundle without creating the zipped public release asset:
+
+```bash
+./tools/build_macos.sh
+```
+
 The release build now also creates a stable alias:
 
 - `dist\release\PoliceClaw-Setup-latest.exe`
@@ -140,13 +166,14 @@ That alias is meant for GitHub Releases so the website can always point to the l
 The lowest-maintenance public deployment model for this repository is:
 
 - GitHub Pages for `xpoliceclaw.com`
-- GitHub Releases for the Windows installer binaries
+- GitHub Releases for the Windows and macOS client binaries
 - Dynadot DNS for the custom domain
 
 Repository assets for this path:
 
 - `docs/index.html`
 - `docs/download/windows/latest/index.html`
+- `docs/download/macos/latest/index.html`
 - `docs/architecture/index.html`
 - `docs/CNAME`
 
@@ -171,10 +198,21 @@ upload these release assets to a GitHub Release:
 - `dist\release\PoliceClaw-Setup-<version>.exe`
 - `dist\release\PoliceClaw-Setup-latest.exe`
 
+If you publish the macOS build as well, also upload:
+
+- `dist/release/PoliceClaw-macOS-<version>.zip`
+- `dist/release/PoliceClaw-macOS-latest.zip`
+
 The public site uses the stable alias at:
 
 ```text
 https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe
+```
+
+And the macOS channel is wired to:
+
+```text
+https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-macOS-latest.zip
 ```
 
 ### Dynadot + GitHub Pages
@@ -214,6 +252,7 @@ After Pages and DNS are configured:
 
 - `https://xpoliceclaw.com/`
 - `https://xpoliceclaw.com/download/windows/latest/`
+- `https://xpoliceclaw.com/download/macos/latest/`
 - `https://xpoliceclaw.com/architecture/`
 
 The public site is download-only. Real scan and uninstall actions still run only inside the installed Windows client.

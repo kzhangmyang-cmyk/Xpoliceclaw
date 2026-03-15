@@ -11,6 +11,8 @@ from app_runtime import PROJECT_ROOT, ensure_runtime_layout, is_admin_session, i
 from app_metadata import (
     APP_DISPLAY_NAME,
     APP_VERSION,
+    PUBLIC_MACOS_DOWNLOAD_URL,
+    PUBLIC_MACOS_MANIFEST_URL,
     PUBLIC_DOWNLOAD_URL,
     PUBLIC_RELEASE_URL,
     PUBLIC_SITE_URL,
@@ -173,6 +175,8 @@ def inject_client_bootstrap():
             "releaseUrl": PUBLIC_RELEASE_URL,
             "publicDownloadUrl": PUBLIC_DOWNLOAD_URL,
             "updateManifestUrl": PUBLIC_UPDATE_MANIFEST_URL,
+            "publicMacosDownloadUrl": PUBLIC_MACOS_DOWNLOAD_URL,
+            "macosManifestUrl": PUBLIC_MACOS_MANIFEST_URL,
             "download": {
                 "available": bool(installer),
                 "url": installer["download_url"] if installer else "",

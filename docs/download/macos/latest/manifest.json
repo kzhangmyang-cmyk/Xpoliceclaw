@@ -1,0 +1,20 @@
+{
+  "platform": "macos",
+  "available": false,
+  "app_name": "Police Claw",
+  "version": "",
+  "release_tag": "",
+  "release_url": "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest",
+  "download_url": "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-macOS-latest.zip",
+  "installer_filename": "PoliceClaw-macOS-latest.zip",
+  "installer_size_bytes": 0,
+  "published_at": "",
+  "minimum_os": "macOS 13",
+  "channel": "preview",
+  "status": "pending",
+  "notes": [
+    "The macOS package is wired into the public download flow but has not been published yet.",
+    "Run tools/build_release_macos.sh on a macOS build host, then upload the versioned archive and PoliceClaw-macOS-latest.zip to GitHub Releases.",
+    "The website will automatically activate the macOS download button once this manifest is updated to available=true."
+  ]
+}

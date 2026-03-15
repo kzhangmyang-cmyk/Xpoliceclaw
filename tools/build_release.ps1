@@ -80,6 +80,8 @@ try {
     $latestAliasPath = Join-Path $root "dist\\release\\PoliceClaw-Setup-latest.exe"
     Copy-Item -Path $setupPath -Destination $latestAliasPath -Force
     $manifest = [ordered]@{
+        platform = "windows"
+        available = $true
         app_name = $metadata.name
         version = $metadata.version
         release_tag = "v$($metadata.version)"
@@ -88,7 +90,9 @@ try {
         installer_filename = [System.IO.Path]::GetFileName($latestAliasPath)
         installer_size_bytes = (Get-Item $latestAliasPath).Length
         published_at = [DateTime]::UtcNow.ToString("s") + "Z"
-        minimum_windows = "Windows 10"
+        minimum_os = "Windows 10"
+        channel = "stable"
+        status = "available"
         notes = @(
             "Runs the local Police Claw workbench on Windows and keeps scan history, uninstall history, and report artifacts on-device.",
             "Automatic handling remains conservative and preserves blocked or broad targets for manual review.",

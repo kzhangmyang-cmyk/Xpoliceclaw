@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Police Claw for Windows</title>
-  <meta name="description" content="Download the Police Claw Windows client and review the architecture of the local scan and remediation workbench.">
+  <title>Police Claw Downloads</title>
+  <meta name="description" content="Download the Police Claw Windows or macOS client and review the architecture of the local scan and remediation workbench.">
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -166,6 +166,12 @@
     .primary-link:hover,
     .ghost-link:hover { transform: translateY(-1px); }
 
+    .disabled-link {
+      pointer-events: none;
+      opacity: 0.52;
+      box-shadow: none;
+    }
+
     .hero-card-stack {
       display: grid;
       gap: 12px;
@@ -271,7 +277,7 @@
         <div class="brand-mark">PC</div>
         <div>
           <strong>Police Claw</strong>
-          <span>Windows Scan and Remediation Client</span>
+          <span>Local Scan and Remediation Client</span>
         </div>
       </div>
       <nav class="topbar-actions">
@@ -282,17 +288,17 @@
 
     <section class="hero">
       <div>
-        <span class="eyebrow">Windows Client Download</span>
+        <span class="eyebrow">Client Downloads</span>
         <h1>Install the local workbench, then scan and remove on-device.</h1>
         <p>
-          Police Claw does not try to scan a visitor browser session. The hosted site distributes the Windows client,
+          Police Claw does not try to scan a visitor browser session. The hosted site distributes the desktop clients,
           while real evidence collection, uninstall actions, reports, and history stay on the local machine after install.
         </p>
         <div class="cta-row">
-          <a id="downloadLink" class="primary-link" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe">Download for Windows</a>
-          <a class="ghost-link" href="./download/windows/latest/">Direct Release Link</a>
+          <a id="windowsDownloadLink" class="primary-link" href="./download/windows/latest/">Download for Windows</a>
+          <a id="macosDownloadLink" class="ghost-link disabled-link" href="./download/macos/latest/" aria-disabled="true">macOS Build Pending</a>
         </div>
-        <p id="releaseMeta" class="meta">Latest release asset: <code>PoliceClaw-Setup-latest.exe</code></p>
+        <p id="releaseMeta" class="meta">Checking public release manifests for Windows and macOS.</p>
       </div>
       <div class="hero-card-stack">
         <article class="hero-card">
@@ -309,6 +315,41 @@
           <span class="eyebrow">Audit</span>
           <strong>Reports and history stay local</strong>
           <p>JSON, DOCX, scan history, and uninstall history persist under the desktop runtime root.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 20px;">
+      <div class="panel-head">
+        <div>
+          <span class="eyebrow">Platform Downloads</span>
+          <h2>Current release channels</h2>
+        </div>
+      </div>
+      <div class="facts">
+        <article class="fact-card">
+          <span class="eyebrow">Windows</span>
+          <strong id="windowsCardTitle">Checking current release</strong>
+          <p id="windowsCardBody">The hosted site is resolving the latest Windows installer details.</p>
+          <div id="windowsCardFacts" class="download-meta">
+            <span class="chip">Checking</span>
+          </div>
+          <div class="cta-row">
+            <a id="windowsCardLink" class="primary-link" href="./download/windows/latest/">Download Windows</a>
+            <a class="ghost-link" href="./download/windows/latest/">Direct link</a>
+          </div>
+        </article>
+        <article class="fact-card">
+          <span class="eyebrow">macOS</span>
+          <strong id="macosCardTitle">Preview channel pending</strong>
+          <p id="macosCardBody">The macOS packaging lane is wired into the public site and activates once a signed archive is published.</p>
+          <div id="macosCardFacts" class="download-meta">
+            <span class="chip">Pending</span>
+          </div>
+          <div class="cta-row">
+            <a id="macosCardLink" class="ghost-link disabled-link" href="./download/macos/latest/" aria-disabled="true">macOS Build Pending</a>
+            <a class="ghost-link" href="./download/macos/latest/">Direct link</a>
+          </div>
         </article>
       </div>
     </section>
@@ -375,16 +416,28 @@
     </section>
 
     <footer>
-      <p>Hosted site mode for <code>xpoliceclaw.com</code>. Install the Windows client to use the full local scan and remediation workbench.</p>
+      <p>Hosted site mode for <code>xpoliceclaw.com</code>. Install the Windows or macOS client to use the full local scan and remediation workbench.</p>
     </footer>
   </main>
   <script>
     (async () => {
-      const manifestUrl = "./download/windows/latest/manifest.json";
-      const downloadLink = document.getElementById("downloadLink");
+      const manifests = {
+        windows: "./download/windows/latest/manifest.json",
+        macos: "./download/macos/latest/manifest.json",
+      };
+      const windowsDownloadLink = document.getElementById("windowsDownloadLink");
+      const macosDownloadLink = document.getElementById("macosDownloadLink");
       const releaseMeta = document.getElementById("releaseMeta");
       const releaseFacts = document.getElementById("releaseFacts");
       const releaseNotice = document.getElementById("releaseNotice");
+      const windowsCardTitle = document.getElementById("windowsCardTitle");
+      const windowsCardBody = document.getElementById("windowsCardBody");
+      const windowsCardFacts = document.getElementById("windowsCardFacts");
+      const windowsCardLink = document.getElementById("windowsCardLink");
+      const macosCardTitle = document.getElementById("macosCardTitle");
+      const macosCardBody = document.getElementById("macosCardBody");
+      const macosCardFacts = document.getElementById("macosCardFacts");
+      const macosCardLink = document.getElementById("macosCardLink");
 
       function formatFileSize(value) {
         const numeric = Number(value || 0);
@@ -400,19 +453,96 @@
         return `${size.toFixed(precision)} ${units[unitIndex]}`;
       }
 
-      try {
-        const response = await fetch(manifestUrl, { headers: { Accept: "application/json" } });
+      function formatPublished(value) {
+        if (!value) return "--";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return new Intl.DateTimeFormat("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        }).format(date);
+      }
+
+      function setButtonState(button, enabled, label, href) {
+        button.textContent = label;
+        button.href = href;
+        button.classList.toggle("disabled-link", !enabled);
+        button.setAttribute("aria-disabled", enabled ? "false" : "true");
+      }
+
+      async function loadManifest(url) {
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
         if (!response.ok) throw new Error("manifest unavailable");
-        const manifest = await response.json();
-        downloadLink.href = manifest.download_url || downloadLink.href;
-        releaseMeta.innerHTML = `Latest release: <code>${manifest.release_tag || manifest.version || "current"}</code> / <code>${manifest.installer_filename || "installer"}</code>`;
-        releaseFacts.innerHTML = [
-          `Version ${manifest.version || "--"}`,
-          formatFileSize(manifest.installer_size_bytes),
-          manifest.minimum_windows || "Windows 10",
+        return response.json();
+      }
+
+      try {
+        const [windows, macos] = await Promise.all([
+          loadManifest(manifests.windows),
+          loadManifest(manifests.macos),
+        ]);
+
+        setButtonState(
+          windowsDownloadLink,
+          Boolean(windows.available && windows.download_url),
+          windows.available ? "Download for Windows" : "Windows Build Pending",
+          windows.download_url || "./download/windows/latest/"
+        );
+        setButtonState(
+          windowsCardLink,
+          Boolean(windows.available && windows.download_url),
+          windows.available ? "Download Windows" : "Windows Build Pending",
+          windows.download_url || "./download/windows/latest/"
+        );
+        windowsCardTitle.textContent = windows.available
+          ? `Windows ${windows.version || "current"} is ready`
+          : "Windows build pending";
+        windowsCardBody.textContent = Array.isArray(windows.notes) && windows.notes.length
+          ? windows.notes[0]
+          : "The current Windows installer is available through the stable release channel.";
+        windowsCardFacts.innerHTML = [
+          windows.release_tag || windows.version || "--",
+          formatFileSize(windows.installer_size_bytes),
+          windows.minimum_os || "Windows 10",
+          formatPublished(windows.published_at),
         ].map((item) => `<span class="chip">${item}</span>`).join("");
-        releaseNotice.innerHTML = `<strong>Note:</strong> ${Array.isArray(manifest.notes) && manifest.notes.length ? manifest.notes[0] : "The direct download path on this site redirects to the latest GitHub Release asset."}`;
+
+        setButtonState(
+          macosDownloadLink,
+          Boolean(macos.available && macos.download_url),
+          macos.available ? "Download for macOS" : "macOS Build Pending",
+          macos.download_url || "./download/macos/latest/"
+        );
+        setButtonState(
+          macosCardLink,
+          Boolean(macos.available && macos.download_url),
+          macos.available ? "Download macOS" : "macOS Build Pending",
+          macos.download_url || "./download/macos/latest/"
+        );
+        macosCardTitle.textContent = macos.available
+          ? `macOS ${macos.version || "current"} is ready`
+          : "macOS preview channel pending";
+        macosCardBody.textContent = Array.isArray(macos.notes) && macos.notes.length
+          ? macos.notes[0]
+          : "The macOS channel will activate once a packaged archive is published to the release lane.";
+        macosCardFacts.innerHTML = [
+          macos.release_tag || "Preview pending",
+          macos.minimum_os || "macOS 13",
+          macos.channel || "preview",
+          formatPublished(macos.published_at),
+        ].map((item) => `<span class="chip">${item}</span>`).join("");
+
+        releaseMeta.innerHTML = `Windows: <code>${windows.release_tag || windows.version || "current"}</code> / macOS: <code>${macos.available ? (macos.release_tag || macos.version || "current") : "pending"}</code>`;
+        releaseFacts.innerHTML = [
+          `Windows ${windows.status || "available"}`,
+          `macOS ${macos.status || "pending"}`,
+          "GitHub Releases",
+          "GitHub Pages",
+        ].map((item) => `<span class="chip">${item}</span>`).join("");
+        releaseNotice.innerHTML = `<strong>Note:</strong> ${Array.isArray(macos.notes) && macos.notes.length ? (macos.available ? macos.notes[0] : macos.notes[1]) : "The direct download paths on this site redirect to the latest GitHub Release assets."}`;
       } catch (error) {
+        releaseMeta.textContent = "Release manifests are temporarily unavailable.";
         releaseFacts.innerHTML = `<span class="chip">Release manifest unavailable</span>`;
       }
     })();
