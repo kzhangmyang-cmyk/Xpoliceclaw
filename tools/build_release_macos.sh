@@ -17,9 +17,9 @@ if [[ ! -x "$PYTHON" ]]; then
 fi
 
 if [[ "$WITH_WEBVIEW" == "1" ]]; then
-  WITH_WEBVIEW=1 CLEAN="$CLEAN" "$ROOT/tools/build_macos.sh"
+  WITH_WEBVIEW=1 CLEAN="$CLEAN" bash "$ROOT/tools/build_macos.sh"
 else
-  CLEAN="$CLEAN" "$ROOT/tools/build_macos.sh"
+  CLEAN="$CLEAN" bash "$ROOT/tools/build_macos.sh"
 fi
 
 VERSION="$("$PYTHON" - <<'PY'

@@ -1,0 +1,69 @@
+name: Build macOS release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos-release:
+    runs-on: macos-14
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create virtual environment
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+
+      - name: Build macOS release assets
+        run: bash ./tools/build_release_macos.sh
+
+      - name: Read application version
+        id: appmeta
+        run: |
+          VERSION="$(.venv/bin/python - <<'PY'
+          import app_metadata as m
+          print(m.APP_VERSION)
+          PY
+          )"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: policeclaw-macos-${{ steps.appmeta.outputs.version }}
+          path: |
+            dist/release/PoliceClaw-macOS-${{ steps.appmeta.outputs.version }}.zip
+            dist/release/PoliceClaw-macOS-latest.zip
+            docs/download/macos/latest/manifest.json
+
+      - name: Publish assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.appmeta.outputs.version }}
+          files: |
+            dist/release/PoliceClaw-macOS-${{ steps.appmeta.outputs.version }}.zip
+            dist/release/PoliceClaw-macOS-latest.zip
+
+      - name: Commit updated macOS manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/download/macos/latest/manifest.json
+          if git diff --cached --quiet; then
+            echo "No manifest changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: publish macOS release manifest"
+          git push

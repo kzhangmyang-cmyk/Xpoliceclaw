@@ -140,7 +140,7 @@ Requirements:
 Run this on macOS:
 
 ```bash
-./tools/build_release_macos.sh
+bash ./tools/build_release_macos.sh
 ```
 
 That script creates:
@@ -152,8 +152,30 @@ That script creates:
 If you want the app bundle without creating the zipped public release asset:
 
 ```bash
-./tools/build_macos.sh
+bash ./tools/build_macos.sh
 ```
+
+### Build A macOS Release Without Owning A Mac
+
+If you do not have a local Mac, use the repository workflow instead:
+
+1. Open the repository on GitHub.
+2. Go to `Actions`.
+3. Select `Build macOS release`.
+4. Click `Run workflow` on the `main` branch.
+
+That workflow uses GitHub-hosted macOS runners to:
+
+- build `dist/release/PoliceClaw-macOS-<version>.zip`
+- refresh `docs/download/macos/latest/manifest.json`
+- upload the two macOS zip assets to the matching GitHub Release
+- commit the updated manifest back to `main`
+
+Important limitations:
+
+- the generated macOS app is unsigned unless you later add Apple signing credentials
+- Gatekeeper may require users to right-click and choose `Open` on first launch
+- notarization is not part of the current release flow
 
 The release build now also creates a stable alias:
 
