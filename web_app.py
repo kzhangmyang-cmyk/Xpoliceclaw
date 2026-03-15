@@ -8,7 +8,14 @@ from flask import Flask, abort, jsonify, render_template, request, send_file, ur
 from werkzeug.exceptions import HTTPException
 
 from app_runtime import PROJECT_ROOT, ensure_runtime_layout, is_admin_session, is_desktop_shell
-from app_metadata import APP_DISPLAY_NAME, APP_VERSION
+from app_metadata import (
+    APP_DISPLAY_NAME,
+    APP_VERSION,
+    PUBLIC_DOWNLOAD_URL,
+    PUBLIC_RELEASE_URL,
+    PUBLIC_SITE_URL,
+    PUBLIC_UPDATE_MANIFEST_URL,
+)
 from scanner_service import ScanService
 from uninstall_service import UninstallService
 
@@ -161,6 +168,11 @@ def inject_client_bootstrap():
             "runtimeRoot": app.config["XPOLICECLAW_RUNTIME_ROOT"],
             "publicSiteMode": public_site_mode,
             "requestIsLocal": _is_local_request(),
+            "appVersion": app.config["XPOLICECLAW_APP_VERSION"],
+            "publicSiteUrl": PUBLIC_SITE_URL,
+            "releaseUrl": PUBLIC_RELEASE_URL,
+            "publicDownloadUrl": PUBLIC_DOWNLOAD_URL,
+            "updateManifestUrl": PUBLIC_UPDATE_MANIFEST_URL,
             "download": {
                 "available": bool(installer),
                 "url": installer["download_url"] if installer else "",

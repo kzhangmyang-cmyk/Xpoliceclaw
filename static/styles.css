@@ -1156,6 +1156,11 @@ a {
   background: var(--teal-soft);
 }
 
+.status-pill.status-neutral {
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
 .status-pill.status-partial {
   color: var(--amber);
   background: var(--amber-soft);

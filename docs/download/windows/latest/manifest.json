@@ -1,0 +1,16 @@
+﻿{
+    "app_name":  "Police Claw",
+    "version":  "0.4.0",
+    "release_tag":  "v0.4.0",
+    "release_url":  "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/tag/v0.4.0",
+    "download_url":  "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe",
+    "installer_filename":  "PoliceClaw-Setup-latest.exe",
+    "installer_size_bytes":  18946337,
+    "published_at":  "2026-03-15T20:38:03Z",
+    "minimum_windows":  "Windows 10",
+    "notes":  [
+                  "Runs the local Police Claw workbench on Windows and keeps scan history, uninstall history, and report artifacts on-device.",
+                  "Automatic handling remains conservative and preserves blocked or broad targets for manual review.",
+                  "The hosted site distributes the installer only. Real scan and uninstall actions execute after the Windows client is installed."
+              ]
+}

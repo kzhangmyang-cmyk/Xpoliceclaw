@@ -9,6 +9,7 @@ $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $python = Join-Path $root ".venv\\Scripts\\python.exe"
 $installerScript = Join-Path $root "installer\\PoliceClaw.iss"
+$publicManifestPath = Join-Path $root "docs\\download\\windows\\latest\\manifest.json"
 
 if (-not (Test-Path $python)) {
     throw "Expected virtual environment at $python"
@@ -78,11 +79,29 @@ try {
     $setupPath = Join-Path $root "dist\\release\\PoliceClaw-Setup-$($metadata.version).exe"
     $latestAliasPath = Join-Path $root "dist\\release\\PoliceClaw-Setup-latest.exe"
     Copy-Item -Path $setupPath -Destination $latestAliasPath -Force
+    $manifest = [ordered]@{
+        app_name = $metadata.name
+        version = $metadata.version
+        release_tag = "v$($metadata.version)"
+        release_url = "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/tag/v$($metadata.version)"
+        download_url = "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe"
+        installer_filename = [System.IO.Path]::GetFileName($latestAliasPath)
+        installer_size_bytes = (Get-Item $latestAliasPath).Length
+        published_at = [DateTime]::UtcNow.ToString("s") + "Z"
+        minimum_windows = "Windows 10"
+        notes = @(
+            "Runs the local Police Claw workbench on Windows and keeps scan history, uninstall history, and report artifacts on-device.",
+            "Automatic handling remains conservative and preserves blocked or broad targets for manual review.",
+            "The hosted site distributes the installer only. Real scan and uninstall actions execute after the Windows client is installed."
+        )
+    }
+    $manifest | ConvertTo-Json -Depth 6 | Set-Content -Path $publicManifestPath -Encoding UTF8
     Write-Host ""
     Write-Host "Release bundle created:"
     Write-Host "  Client:   $exePath"
     Write-Host "  Installer: $setupPath"
     Write-Host "  Latest alias: $latestAliasPath"
+    Write-Host "  Public manifest: $publicManifestPath"
 } finally {
     Pop-Location
 }

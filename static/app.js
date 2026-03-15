@@ -29,6 +29,11 @@ const API_HEADER_NAME = CLIENT_BOOTSTRAP.apiHeaderName || "X-PoliceClaw-Token";
 const API_TOKEN = CLIENT_BOOTSTRAP.apiToken || "";
 const PUBLIC_SITE_MODE = Boolean(CLIENT_BOOTSTRAP.publicSiteMode);
 const DOWNLOAD_ASSET = CLIENT_BOOTSTRAP.download || {};
+const APP_VERSION = CLIENT_BOOTSTRAP.appVersion || "0.0.0";
+const PUBLIC_SITE_URL = CLIENT_BOOTSTRAP.publicSiteUrl || "https://xpoliceclaw.com";
+const RELEASE_URL = CLIENT_BOOTSTRAP.releaseUrl || "";
+const PUBLIC_DOWNLOAD_URL = CLIENT_BOOTSTRAP.publicDownloadUrl || "";
+const UPDATE_MANIFEST_URL = CLIENT_BOOTSTRAP.updateManifestUrl || `${PUBLIC_SITE_URL}/download/windows/latest/manifest.json`;
 const UNINSTALL_CONFIRMATION_TEXT = "UNINSTALL CONFIRMED";
 const HIGH_RISK_THRESHOLD = 70;
 const TASK_ACTIVE_STATUSES = new Set(["pending", "running"]);
@@ -50,6 +55,8 @@ const state = {
   uninstallPollTimer: null,
   uninstallPollingTaskId: null,
   uninstallPollInFlight: false,
+  releaseInfo: null,
+  releaseStatus: "checking",
   eventsBound: false,
   notice: null,
   filters: {
@@ -108,6 +115,7 @@ function bindEvents() {
 async function bootstrap() {
   renderEmptyState();
   renderGlobalNotice();
+  loadReleaseInfo().catch(() => {});
 
   if (PUBLIC_SITE_MODE) {
     renderPublicSiteMode();
@@ -259,6 +267,26 @@ async function loadUninstallResult(taskId) {
   renderUninstallResult();
 }
 
+async function loadReleaseInfo() {
+  state.releaseStatus = "checking";
+  renderDownloadPanel();
+  try {
+    const response = await fetch(UPDATE_MANIFEST_URL, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    const payload = await parseJson(response, "Unable to check the latest public release.");
+    state.releaseInfo = payload;
+    state.releaseStatus = "ready";
+  } catch (error) {
+    state.releaseInfo = null;
+    state.releaseStatus = "unavailable";
+  }
+  renderDownloadPanel();
+  syncOperationPanel(state.currentJob);
+}
+
 function startPolling(jobId) {
   stopPolling();
   state.pollTimer = window.setInterval(async () => {
@@ -342,6 +370,7 @@ function renderJob(job) {
   renderUninstallPanel();
   renderUninstallResult();
   renderUninstallHistory();
+  renderDownloadPanel();
 }
 
 function refreshUninstallViews() {
@@ -353,6 +382,7 @@ function refreshUninstallViews() {
   renderUninstallPanel();
   renderUninstallResult();
   renderUninstallHistory();
+  renderDownloadPanel();
   renderModal();
 }
 
@@ -2081,6 +2111,23 @@ function formatFileSize(value) {
   return `${size.toFixed(precision)} ${units[unitIndex]}`;
 }
 
+function compareVersions(left, right) {
+  const leftParts = String(left || "0").split(".").map((part) => Number(part || 0));
+  const rightParts = String(right || "0").split(".").map((part) => Number(part || 0));
+  const maxLength = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < maxLength; index += 1) {
+    const leftValue = leftParts[index] || 0;
+    const rightValue = rightParts[index] || 0;
+    if (leftValue > rightValue) {
+      return 1;
+    }
+    if (leftValue < rightValue) {
+      return -1;
+    }
+  }
+  return 0;
+}
+
 function formatDuration(value) {
   const numeric = Number(value || 0);
   if (!numeric) {
@@ -2117,18 +2164,104 @@ function buildEmptyCard(text) {
   return `<div class="empty-card">${escapeHtml(text)}</div>`;
 }
 
+function getReleaseDisplayState() {
+  const release = state.releaseInfo || {};
+  const releaseVersion = safeText(release.version, DOWNLOAD_ASSET.version || "");
+  const releaseFilename = safeText(release.installer_filename, DOWNLOAD_ASSET.filename || "");
+  const releaseSizeBytes = Number(release.installer_size_bytes || DOWNLOAD_ASSET.sizeBytes || 0);
+  const downloadUrl = safeText(release.download_url, PUBLIC_DOWNLOAD_URL || DOWNLOAD_ASSET.url || "");
+  const publishedAt = safeText(release.published_at, "");
+  const comparison = compareVersions(releaseVersion, APP_VERSION);
+
+  if (state.releaseStatus === "checking") {
+    return {
+      pillClass: "status-queued",
+      pillLabel: "Checking",
+      metaText: "Checking the public release channel for the latest Windows installer.",
+      summaryText: "The workbench is querying the hosted release manifest so the local client can compare installed and published versions.",
+      buttonLabel: hasDownloadAsset() ? "Download Windows Client" : "Checking Release",
+      version: releaseVersion || DOWNLOAD_ASSET.version || "--",
+      filename: releaseFilename || DOWNLOAD_ASSET.filename || "--",
+      sizeLabel: formatFileSize(releaseSizeBytes),
+      publishedLabel: publishedAt ? formatDate(publishedAt) : "--",
+      downloadUrl,
+    };
+  }
+
+  if (state.releaseStatus === "ready" && releaseVersion) {
+    if (comparison > 0) {
+      return {
+        pillClass: "status-partial",
+        pillLabel: "Update Available",
+        metaText: `Public release ${releaseVersion} is newer than the installed client ${APP_VERSION}.`,
+        summaryText: "Download the latest Windows client package before the next local scan if you want the newest workbench fixes and release metadata.",
+        buttonLabel: "Download Update",
+        version: releaseVersion,
+        filename: releaseFilename || "--",
+        sizeLabel: formatFileSize(releaseSizeBytes),
+        publishedLabel: publishedAt ? formatDate(publishedAt) : "--",
+        downloadUrl,
+      };
+    }
+    return {
+      pillClass: "status-success",
+      pillLabel: "Up To Date",
+      metaText: `Installed client ${APP_VERSION} matches the latest public release.`,
+      summaryText: "The release channel is healthy. Download links remain available for reinstall, peer deployment, or clean-room verification.",
+      buttonLabel: "Download Windows Client",
+      version: releaseVersion,
+      filename: releaseFilename || "--",
+      sizeLabel: formatFileSize(releaseSizeBytes),
+      publishedLabel: publishedAt ? formatDate(publishedAt) : "--",
+      downloadUrl,
+    };
+  }
+
+  if (hasDownloadAsset()) {
+    return {
+      pillClass: "status-running",
+      pillLabel: "Bundled",
+      metaText: `${DOWNLOAD_ASSET.filename} is attached to the current host.`,
+      summaryText: "The current environment can hand off a local installer package directly. Release manifest details were not available, so only the bundled file is shown.",
+      buttonLabel: "Download Windows Client",
+      version: DOWNLOAD_ASSET.version || "--",
+      filename: DOWNLOAD_ASSET.filename || "--",
+      sizeLabel: formatFileSize(DOWNLOAD_ASSET.sizeBytes),
+      publishedLabel: "--",
+      downloadUrl: DOWNLOAD_ASSET.url || "",
+    };
+  }
+
+  return {
+    pillClass: "status-neutral",
+    pillLabel: "Unavailable",
+    metaText: state.releaseStatus === "unavailable"
+      ? "The public release channel could not be checked from this client session."
+      : "No release package detected yet.",
+    summaryText: "Build or publish the Windows installer to the public release channel so the website and local workbench can expose a stable download path.",
+    buttonLabel: "Installer Unavailable",
+    version: "--",
+    filename: "--",
+    sizeLabel: "--",
+    publishedLabel: "--",
+    downloadUrl: "",
+  };
+}
+
 function renderDownloadPanel() {
   const topLink = document.getElementById("downloadTopLink");
   const heroLink = document.getElementById("heroDownloadLink");
   const heroMeta = document.getElementById("heroDownloadMeta");
+  const statusPill = document.getElementById("downloadStatusPill");
   const panelMeta = document.getElementById("downloadPanelMeta");
   const panelSummary = document.getElementById("downloadPanelSummary");
   const factList = document.getElementById("downloadFactList");
   const button = document.getElementById("downloadClientBtn");
-  const available = hasDownloadAsset();
-  const url = available ? DOWNLOAD_ASSET.url : "#";
+  const releaseState = getReleaseDisplayState();
+  const available = hasDownloadAsset() || Boolean(releaseState.downloadUrl);
+  const url = releaseState.downloadUrl || (hasDownloadAsset() ? DOWNLOAD_ASSET.url : "#");
   const label = available
-    ? `Windows installer ${DOWNLOAD_ASSET.version || ""}`.trim()
+    ? `Windows installer ${releaseState.version || DOWNLOAD_ASSET.version || ""}`.trim()
     : "No installer package attached";
 
   [topLink, heroLink].forEach((link) => {
@@ -2137,19 +2270,20 @@ function renderDownloadPanel() {
   });
 
   heroMeta.textContent = available
-    ? `${label} / ${formatFileSize(DOWNLOAD_ASSET.sizeBytes)}`
+    ? `${label} / ${releaseState.sizeLabel}`
     : "Build dist/release/PoliceClaw-Setup-<version>.exe to expose a direct website download.";
 
-  panelMeta.textContent = available
-    ? `${DOWNLOAD_ASSET.filename} / ${formatFileSize(DOWNLOAD_ASSET.sizeBytes)}`
-    : "No release package detected yet";
-  panelSummary.textContent = available
-    ? "The hosted site can hand off the installer directly. After installation, the Windows client opens the same local workbench for scan and uninstall."
-    : "Build the Windows release first. Once the installer exists under dist/release, the website can serve it directly.";
+  statusPill.className = `status-pill ${releaseState.pillClass}`;
+  statusPill.textContent = releaseState.pillLabel;
+
+  panelMeta.textContent = releaseState.metaText;
+  panelSummary.textContent = releaseState.summaryText;
   factList.innerHTML = [
-    ["Version", DOWNLOAD_ASSET.version || "--"],
-    ["Package", DOWNLOAD_ASSET.filename || "--"],
-    ["Size", available ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--"],
+    ["Installed", APP_VERSION || "--"],
+    ["Latest", releaseState.version || DOWNLOAD_ASSET.version || "--"],
+    ["Package", releaseState.filename || DOWNLOAD_ASSET.filename || "--"],
+    ["Size", releaseState.sizeLabel],
+    ["Published", releaseState.publishedLabel],
     ["Scope", "Local Windows client"],
   ].map(([labelText, value]) => `
     <div class="runtime-item">
@@ -2161,7 +2295,7 @@ function renderDownloadPanel() {
   button.href = url;
   button.setAttribute("aria-disabled", available ? "false" : "true");
   button.classList.toggle("is-disabled", !available);
-  button.textContent = available ? "Download Windows Client" : "Installer Unavailable";
+  button.textContent = releaseState.buttonLabel;
 }
 
 function hasDownloadAsset() {
@@ -2169,11 +2303,12 @@ function hasDownloadAsset() {
 }
 
 function openDownloadAsset() {
-  if (!hasDownloadAsset()) {
+  const releaseState = getReleaseDisplayState();
+  if (!releaseState.downloadUrl && !hasDownloadAsset()) {
     renderGlobalError("No Windows installer package is attached to the hosted site yet.", "Download Unavailable");
     return;
   }
-  window.location.href = DOWNLOAD_ASSET.url;
+  window.location.href = releaseState.downloadUrl || DOWNLOAD_ASSET.url;
 }
 
 async function requestJson(url, options = {}, fallbackMessage = "Request failed.") {

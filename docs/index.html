@@ -289,10 +289,10 @@
           while real evidence collection, uninstall actions, reports, and history stay on the local machine after install.
         </p>
         <div class="cta-row">
-          <a class="primary-link" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe">Download for Windows</a>
+          <a id="downloadLink" class="primary-link" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe">Download for Windows</a>
           <a class="ghost-link" href="./download/windows/latest/">Direct Release Link</a>
         </div>
-        <p class="meta">Latest release asset: <code>PoliceClaw-Setup-latest.exe</code></p>
+        <p id="releaseMeta" class="meta">Latest release asset: <code>PoliceClaw-Setup-latest.exe</code></p>
       </div>
       <div class="hero-card-stack">
         <article class="hero-card">
@@ -366,7 +366,10 @@
             <span class="chip">GitHub Releases downloads</span>
             <span class="chip">Dynadot custom domain</span>
           </div>
-          <p class="notice"><strong>Note:</strong> the direct download path on this site redirects to the latest GitHub Release asset.</p>
+          <div id="releaseFacts" class="download-meta">
+            <span class="chip">Checking latest version</span>
+          </div>
+          <p id="releaseNotice" class="notice"><strong>Note:</strong> the direct download path on this site redirects to the latest GitHub Release asset.</p>
         </div>
       </article>
     </section>
@@ -375,5 +378,44 @@
       <p>Hosted site mode for <code>xpoliceclaw.com</code>. Install the Windows client to use the full local scan and remediation workbench.</p>
     </footer>
   </main>
+  <script>
+    (async () => {
+      const manifestUrl = "./download/windows/latest/manifest.json";
+      const downloadLink = document.getElementById("downloadLink");
+      const releaseMeta = document.getElementById("releaseMeta");
+      const releaseFacts = document.getElementById("releaseFacts");
+      const releaseNotice = document.getElementById("releaseNotice");
+
+      function formatFileSize(value) {
+        const numeric = Number(value || 0);
+        if (!numeric) return "--";
+        const units = ["B", "KB", "MB", "GB"];
+        let size = numeric;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+          size /= 1024;
+          unitIndex += 1;
+        }
+        const precision = unitIndex === 0 ? 0 : size >= 100 ? 0 : size >= 10 ? 1 : 2;
+        return `${size.toFixed(precision)} ${units[unitIndex]}`;
+      }
+
+      try {
+        const response = await fetch(manifestUrl, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("manifest unavailable");
+        const manifest = await response.json();
+        downloadLink.href = manifest.download_url || downloadLink.href;
+        releaseMeta.innerHTML = `Latest release: <code>${manifest.release_tag || manifest.version || "current"}</code> / <code>${manifest.installer_filename || "installer"}</code>`;
+        releaseFacts.innerHTML = [
+          `Version ${manifest.version || "--"}`,
+          formatFileSize(manifest.installer_size_bytes),
+          manifest.minimum_windows || "Windows 10",
+        ].map((item) => `<span class="chip">${item}</span>`).join("");
+        releaseNotice.innerHTML = `<strong>Note:</strong> ${Array.isArray(manifest.notes) && manifest.notes.length ? manifest.notes[0] : "The direct download path on this site redirects to the latest GitHub Release asset."}`;
+      } catch (error) {
+        releaseFacts.innerHTML = `<span class="chip">Release manifest unavailable</span>`;
+      }
+    })();
+  </script>
 </body>
 </html>
