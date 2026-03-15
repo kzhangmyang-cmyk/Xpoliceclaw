@@ -167,6 +167,36 @@ a {
   border-bottom: 1px solid rgba(23, 32, 42, 0.16);
 }
 
+.primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #176f6c, #238e88);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 14px 32px rgba(35, 142, 136, 0.2);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.primary-link:hover {
+  transform: translateY(-1px);
+}
+
+.primary-link.is-hidden {
+  display: none;
+}
+
+.primary-link.is-disabled {
+  pointer-events: none;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
 .hero-panel {
   margin-top: 16px;
   border-radius: 30px;
@@ -216,6 +246,14 @@ a {
 .hero-panel p {
   max-width: 62ch;
   margin-top: 14px;
+}
+
+.hero-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
 }
 
 .hero-highlights {
@@ -737,6 +775,10 @@ a {
   cursor: pointer;
   transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
   box-shadow: 0 16px 34px rgba(23, 111, 108, 0.22);
+}
+
+.side-panel .primary-link {
+  width: 100%;
 }
 
 .primary-btn:hover:not(:disabled) {

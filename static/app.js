@@ -24,6 +24,11 @@ const TASK_STATUS_LABELS = {
   partial: "Partial",
 };
 
+const CLIENT_BOOTSTRAP = window.POLICE_CLAW_BOOTSTRAP || {};
+const API_HEADER_NAME = CLIENT_BOOTSTRAP.apiHeaderName || "X-PoliceClaw-Token";
+const API_TOKEN = CLIENT_BOOTSTRAP.apiToken || "";
+const PUBLIC_SITE_MODE = Boolean(CLIENT_BOOTSTRAP.publicSiteMode);
+const DOWNLOAD_ASSET = CLIENT_BOOTSTRAP.download || {};
 const UNINSTALL_CONFIRMATION_TEXT = "UNINSTALL CONFIRMED";
 const HIGH_RISK_THRESHOLD = 70;
 const TASK_ACTIVE_STATUSES = new Set(["pending", "running"]);
@@ -79,7 +84,7 @@ function bindEvents() {
     return;
   }
   state.eventsBound = true;
-  document.getElementById("startScanBtn").addEventListener("click", startScan);
+  document.getElementById("startScanBtn").addEventListener("click", handlePrimaryAction);
   document.getElementById("historyList").addEventListener("click", onHistoryClick);
   document.getElementById("domainPortfolio").addEventListener("click", onDomainClick);
   document.getElementById("findingsTable").addEventListener("click", onFindingClick);
@@ -103,6 +108,12 @@ function bindEvents() {
 async function bootstrap() {
   renderEmptyState();
   renderGlobalNotice();
+
+  if (PUBLIC_SITE_MODE) {
+    renderPublicSiteMode();
+    renderModal();
+    return;
+  }
 
   const failures = [];
   await Promise.all([
@@ -152,6 +163,14 @@ async function bootstrap() {
   } catch (error) {
     renderGlobalError(error.message);
   }
+}
+
+function handlePrimaryAction() {
+  if (PUBLIC_SITE_MODE) {
+    openDownloadAsset();
+    return;
+  }
+  startScan();
 }
 
 async function startScan() {
@@ -338,6 +357,24 @@ function refreshUninstallViews() {
 }
 
 function syncOperationPanel(job) {
+  if (PUBLIC_SITE_MODE) {
+    document.getElementById("jobStateText").textContent = hasDownloadAsset()
+      ? "Public download site"
+      : "Release package unavailable";
+    document.getElementById("jobMetaText").textContent = hasDownloadAsset()
+      ? `Windows installer ${DOWNLOAD_ASSET.version || "--"} is ready for direct download.`
+      : "Build a Windows release package to enable direct website downloads.";
+    document.getElementById("scanIdLabel").textContent = DOWNLOAD_ASSET.version || "--";
+    document.getElementById("scanTimeLabel").textContent = hasDownloadAsset()
+      ? formatFileSize(DOWNLOAD_ASSET.sizeBytes)
+      : "--";
+    document.getElementById("uninstallAvailableLabel").textContent = "--";
+    document.getElementById("uninstallLastStatus").textContent = "Local Only";
+    document.getElementById("uninstallLastMeta").textContent =
+      "Real scan and uninstall remain available after the Windows client is installed.";
+    return;
+  }
+
   const stageText = getStageLabel(job?.stage_key, job?.stage_label);
   const statusText = job?.status === "failed"
     ? "Scan failed"
@@ -380,6 +417,61 @@ function renderExecutiveSummary(job) {
   const metaScanTime = document.getElementById("metaScanTime");
   const summaryGrid = document.getElementById("summaryGrid");
   const recommendationList = document.getElementById("recommendationList");
+
+  if (PUBLIC_SITE_MODE) {
+    badge.className = "report-badge report-badge-info";
+    badge.textContent = hasDownloadAsset() ? "Website Download" : "Release Pending";
+    headline.textContent = "Download the Windows client to scan and remediate the local machine.";
+    narrative.textContent = hasDownloadAsset()
+      ? "The hosted site distributes the desktop installer. Real scanning, evidence collection, and uninstall actions still run locally on Windows after installation."
+      : "The public site is live, but no installer package is attached yet. Build a Windows release to enable direct client downloads.";
+    metaHost.textContent = "Windows Client";
+    metaOs.textContent = "Windows 10+";
+    metaScanId.textContent = DOWNLOAD_ASSET.version || "--";
+    metaScanTime.textContent = hasDownloadAsset() ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--";
+    summaryGrid.innerHTML = [
+      { value: hasDownloadAsset() ? DOWNLOAD_ASSET.version || "--" : "--", label: "Installer Version" },
+      { value: hasDownloadAsset() ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--", label: "Package Size" },
+      { value: "Local", label: "Execution Scope" },
+      { value: "Conservative", label: "Removal Boundary" },
+      { value: "Persisted", label: "History Recovery" },
+    ].map((card) => `
+      <article class="summary-card">
+        <span>${escapeHtml(card.label)}</span>
+        <strong>${escapeHtml(String(card.value))}</strong>
+      </article>
+    `).join("");
+    recommendationList.innerHTML = [
+      {
+        tone: "neutral",
+        tag: "Download",
+        title: hasDownloadAsset() ? "Install the Windows client" : "Build a release package",
+        body: hasDownloadAsset()
+          ? "Use the direct installer to deploy the local workbench, then run scans and uninstall tasks on the Windows host."
+          : "No installer is published yet. Build dist/release first so the website can serve a Windows client.",
+      },
+      {
+        tone: "warn",
+        tag: "Boundary",
+        title: "The hosted site does not scan the visitor machine",
+        body: "All real scan and uninstall actions still execute inside the installed Windows client, not in the remote browser session.",
+      },
+      {
+        tone: "info",
+        tag: "Audit",
+        title: "Reports and task history stay local",
+        body: "The installed client keeps scan history, uninstall history, and report artifacts under the local runtime root for later review.",
+      },
+    ].map((item) => `
+      <article class="recommendation-item recommendation-${escapeHtml(item.tone || "neutral")}">
+        ${item.tag ? `<span class="recommendation-tag recommendation-tag-${escapeHtml(item.tone || "neutral")}">${escapeHtml(item.tag)}</span>` : ""}
+        <strong>${escapeHtml(item.title)}</strong>
+        <p>${escapeHtml(item.body)}</p>
+      </article>
+    `).join("");
+    renderUninstallTargets();
+    return;
+  }
 
   if (!report) {
     badge.className = "report-badge";
@@ -449,6 +541,18 @@ function renderUninstallTargets() {
   const container = document.getElementById("uninstallTargetList");
   const meta = document.getElementById("uninstallTargetMeta");
   const targets = getRenderableUninstallTargets();
+
+  if (PUBLIC_SITE_MODE) {
+    meta.textContent = hasDownloadAsset()
+      ? "Targets appear after the client completes a local scan"
+      : "Publish an installer to activate website downloads";
+    container.innerHTML = buildEmptyCard(
+      hasDownloadAsset()
+        ? "This hosted page distributes the Windows client. Inferred uninstall targets appear only inside the local workbench after installation."
+        : "No release package is available yet. Build a Windows installer so the website can hand off to the local client."
+    );
+    return;
+  }
 
   if (!targets.length) {
     meta.textContent = "No inferred uninstall targets yet";
@@ -615,11 +719,29 @@ function renderSafetyNotes(job) {
       title: "Deletion boundary",
       body: "The runner will not remove root paths, user home roots, browser profiles, workspace directories, or any broad directory that fails safety validation.",
     },
-    {
-      title: "History persistence",
-      body: "Completed scan and uninstall summaries are stored under data/ so the workbench can recover recent history after a restart.",
-    },
-  ];
+      {
+        title: "History persistence",
+        body: `Completed scan and uninstall summaries are stored under ${CLIENT_BOOTSTRAP.runtimeRoot || "the local runtime root"} so the workbench can recover recent history after a restart.`,
+      },
+    ];
+
+  if (CLIENT_BOOTSTRAP.desktopShell) {
+    notes.push({
+      title: "Desktop session",
+      body: CLIENT_BOOTSTRAP.adminMode
+        ? "The client is running in desktop mode with administrator rights, so protected uninstall steps can execute on the local machine."
+        : "The client is running in desktop mode without administrator rights. Some uninstall steps may be preserved until the launcher is elevated.",
+    });
+  }
+
+  if (PUBLIC_SITE_MODE) {
+    notes.push({
+      title: "Hosted website mode",
+      body: hasDownloadAsset()
+        ? "This public site only distributes the Windows installer. Real scan, evidence collection, and uninstall still execute after the local client is installed."
+        : "This public site is running without an attached installer package. Publish a release build to enable direct downloads.",
+    });
+  }
 
   if (job?.report?.demo_mode || job?.demo_mode || job?.source_type === "demo") {
     notes.push({
@@ -1076,6 +1198,11 @@ function buildResultGroup(title, items) {
 function syncButtonState() {
   const running = state.currentJob && ["queued", "running"].includes(state.currentJob.status);
   const button = document.getElementById("startScanBtn");
+  if (PUBLIC_SITE_MODE) {
+    button.disabled = !hasDownloadAsset();
+    button.textContent = hasDownloadAsset() ? "Download Windows Client" : "Release Package Missing";
+    return;
+  }
   button.disabled = Boolean(running);
   button.textContent = running ? "Scan Running" : "Start Real Scan";
 }
@@ -1095,7 +1222,23 @@ function renderEmptyState() {
   renderUninstallPanel();
   renderUninstallResult();
   renderUninstallHistory();
+  renderDownloadPanel();
   renderModal();
+}
+
+function renderPublicSiteMode() {
+  document.title = hasDownloadAsset()
+    ? "Police Claw Windows Client Download"
+    : "Police Claw Release Package Pending";
+  setGlobalNotice(
+    hasDownloadAsset() ? "info" : "warn",
+    hasDownloadAsset() ? "Download the Windows client" : "Installer package not available",
+    hasDownloadAsset()
+      ? "The hosted site distributes the installer directly. Real scan and uninstall actions still run locally after the client is installed."
+      : "Build dist/release/PoliceClaw-Setup-<version>.exe to enable direct website downloads."
+  );
+  renderExecutiveSummary(null);
+  renderDownloadPanel();
 }
 
 function renderGlobalNotice() {
@@ -1922,6 +2065,22 @@ function formatPercent(value) {
   return `${Math.round(numeric * 100)}%`;
 }
 
+function formatFileSize(value) {
+  const numeric = Number(value || 0);
+  if (!numeric) {
+    return "--";
+  }
+  const units = ["B", "KB", "MB", "GB"];
+  let size = numeric;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  const precision = unitIndex === 0 ? 0 : size >= 100 ? 0 : size >= 10 ? 1 : 2;
+  return `${size.toFixed(precision)} ${units[unitIndex]}`;
+}
+
 function formatDuration(value) {
   const numeric = Number(value || 0);
   if (!numeric) {
@@ -1958,14 +2117,85 @@ function buildEmptyCard(text) {
   return `<div class="empty-card">${escapeHtml(text)}</div>`;
 }
 
+function renderDownloadPanel() {
+  const topLink = document.getElementById("downloadTopLink");
+  const heroLink = document.getElementById("heroDownloadLink");
+  const heroMeta = document.getElementById("heroDownloadMeta");
+  const panelMeta = document.getElementById("downloadPanelMeta");
+  const panelSummary = document.getElementById("downloadPanelSummary");
+  const factList = document.getElementById("downloadFactList");
+  const button = document.getElementById("downloadClientBtn");
+  const available = hasDownloadAsset();
+  const url = available ? DOWNLOAD_ASSET.url : "#";
+  const label = available
+    ? `Windows installer ${DOWNLOAD_ASSET.version || ""}`.trim()
+    : "No installer package attached";
+
+  [topLink, heroLink].forEach((link) => {
+    link.href = url;
+    link.classList.toggle("is-hidden", !available);
+  });
+
+  heroMeta.textContent = available
+    ? `${label} / ${formatFileSize(DOWNLOAD_ASSET.sizeBytes)}`
+    : "Build dist/release/PoliceClaw-Setup-<version>.exe to expose a direct website download.";
+
+  panelMeta.textContent = available
+    ? `${DOWNLOAD_ASSET.filename} / ${formatFileSize(DOWNLOAD_ASSET.sizeBytes)}`
+    : "No release package detected yet";
+  panelSummary.textContent = available
+    ? "The hosted site can hand off the installer directly. After installation, the Windows client opens the same local workbench for scan and uninstall."
+    : "Build the Windows release first. Once the installer exists under dist/release, the website can serve it directly.";
+  factList.innerHTML = [
+    ["Version", DOWNLOAD_ASSET.version || "--"],
+    ["Package", DOWNLOAD_ASSET.filename || "--"],
+    ["Size", available ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--"],
+    ["Scope", "Local Windows client"],
+  ].map(([labelText, value]) => `
+    <div class="runtime-item">
+      <span class="runtime-key">${escapeHtml(String(labelText))}</span>
+      <strong class="runtime-value">${escapeHtml(String(value))}</strong>
+    </div>
+  `).join("");
+
+  button.href = url;
+  button.setAttribute("aria-disabled", available ? "false" : "true");
+  button.classList.toggle("is-disabled", !available);
+  button.textContent = available ? "Download Windows Client" : "Installer Unavailable";
+}
+
+function hasDownloadAsset() {
+  return Boolean(DOWNLOAD_ASSET.available && DOWNLOAD_ASSET.url);
+}
+
+function openDownloadAsset() {
+  if (!hasDownloadAsset()) {
+    renderGlobalError("No Windows installer package is attached to the hosted site yet.", "Download Unavailable");
+    return;
+  }
+  window.location.href = DOWNLOAD_ASSET.url;
+}
+
 async function requestJson(url, options = {}, fallbackMessage = "Request failed.") {
   let response;
   try {
-    response = await fetch(url, options);
+    response = await fetch(url, {
+      ...options,
+      headers: buildRequestHeaders(options.headers || {}),
+    });
   } catch (error) {
     throw new Error(fallbackMessage);
   }
   return parseJson(response, fallbackMessage);
+}
+
+function buildRequestHeaders(headers = {}) {
+  const merged = new Headers(headers);
+  merged.set("Accept", "application/json");
+  if (API_TOKEN) {
+    merged.set(API_HEADER_NAME, API_TOKEN);
+  }
+  return merged;
 }
 
 async function parseJson(response, fallbackMessage = "Request failed.") {

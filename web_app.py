@@ -1,37 +1,50 @@
 from __future__ import annotations
 
 import os
+import secrets
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file, url_for
 from werkzeug.exceptions import HTTPException
 
+from app_runtime import PROJECT_ROOT, ensure_runtime_layout, is_admin_session, is_desktop_shell
+from app_metadata import APP_DISPLAY_NAME, APP_VERSION
 from scanner_service import ScanService
 from uninstall_service import UninstallService
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = PROJECT_ROOT
 API_PREFIX = "/api/"
-
-
-def _prepare_runtime_layout() -> None:
-    for directory in (ROOT / "reports", ROOT / "data"):
-        directory.mkdir(parents=True, exist_ok=True)
-
-
-_prepare_runtime_layout()
-service = ScanService(ROOT / "reports")
+LOCAL_API_HEADER = "X-PoliceClaw-Token"
+LOCAL_API_QUERY_PARAM = "token"
+LOCALHOST_ADDRESSES = {"127.0.0.1", "::1"}
+DIST_ROOT = ROOT / "dist"
+DEFAULT_RELEASE_ROOT = DIST_ROOT / "release"
+RELEASE_ROOT = Path(os.getenv("XPOLICECLAW_RELEASE_ROOT", str(DEFAULT_RELEASE_ROOT))).expanduser()
+RUNTIME = ensure_runtime_layout()
+service = ScanService(RUNTIME.reports)
 uninstall_service = UninstallService(service)
 app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
+app.config.update(
+    XPOLICECLAW_RUNTIME_ROOT=str(RUNTIME.root),
+    XPOLICECLAW_DATA_ROOT=str(RUNTIME.data),
+    XPOLICECLAW_REPORT_ROOT=str(RUNTIME.reports),
+    XPOLICECLAW_API_TOKEN=os.getenv("XPOLICECLAW_API_TOKEN", "").strip() or secrets.token_urlsafe(32),
+    XPOLICECLAW_DESKTOP_SHELL=is_desktop_shell(),
+    XPOLICECLAW_ADMIN_MODE=is_admin_session(),
+    XPOLICECLAW_APP_NAME=APP_DISPLAY_NAME,
+    XPOLICECLAW_APP_VERSION=APP_VERSION,
+    XPOLICECLAW_RELEASE_ROOT=str(RELEASE_ROOT),
+)
 
 
 def _decorate_job(job: dict, *, include_report: bool) -> dict:
     payload = dict(job)
     artifacts = dict(payload.get("artifacts", {}))
     if artifacts.get("json"):
-        artifacts["json_url"] = url_for("download_artifact", job_id=job["id"], artifact="json")
+        artifacts["json_url"] = _build_artifact_url(job["id"], "json")
     if artifacts.get("docx"):
-        artifacts["docx_url"] = url_for("download_artifact", job_id=job["id"], artifact="docx")
+        artifacts["docx_url"] = _build_artifact_url(job["id"], "docx")
     payload["artifacts"] = artifacts
     if not include_report:
         payload.pop("report", None)
@@ -46,6 +59,48 @@ def _decorate_uninstall_task(task: dict) -> dict:
 
 def _is_api_request() -> bool:
     return request.path.startswith(API_PREFIX)
+
+
+def _is_local_request() -> bool:
+    addresses = [
+        (address or "").split("%", 1)[0].strip().lower()
+        for address in [*request.access_route, request.remote_addr]
+        if address
+    ]
+    if not addresses:
+        return True
+    return all(address in LOCALHOST_ADDRESSES or address == "localhost" for address in addresses)
+
+
+def _resolve_client_token() -> str:
+    header_token = request.headers.get(LOCAL_API_HEADER, "").strip()
+    if header_token:
+        return header_token
+    return request.args.get(LOCAL_API_QUERY_PARAM, "").strip()
+
+
+def _build_artifact_url(job_id: str, artifact: str) -> str:
+    return url_for(
+        "download_artifact",
+        job_id=job_id,
+        artifact=artifact,
+        **{LOCAL_API_QUERY_PARAM: app.config["XPOLICECLAW_API_TOKEN"]},
+    )
+
+
+def _latest_windows_installer() -> dict | None:
+    candidates = sorted(RELEASE_ROOT.glob("PoliceClaw-Setup-*.exe"), key=lambda item: item.stat().st_mtime, reverse=True)
+    if not candidates:
+        return None
+    installer = candidates[0]
+    version = installer.stem.replace("PoliceClaw-Setup-", "", 1).strip() or APP_VERSION
+    return {
+        "path": installer,
+        "filename": installer.name,
+        "version": version,
+        "size_bytes": installer.stat().st_size,
+        "download_url": url_for("download_windows_installer"),
+    }
 
 
 def api_success(payload: dict | None = None, *, status: int = 200):
@@ -82,6 +137,41 @@ def handle_api_exception(exc: Exception):
     return api_error("internal_error", status=500, message="Unexpected server error.")
 
 
+@app.before_request
+def enforce_local_api_guardrails():
+    if not _is_api_request():
+        return None
+    if not _is_local_request():
+        return api_error("forbidden", status=403, message="Police Claw API accepts local requests only.")
+    if _resolve_client_token() != app.config["XPOLICECLAW_API_TOKEN"]:
+        return api_error("unauthorized", status=401, message="Missing or invalid local client token.")
+    return None
+
+
+@app.context_processor
+def inject_client_bootstrap():
+    installer = _latest_windows_installer()
+    public_site_mode = not _is_local_request() and not bool(app.config["XPOLICECLAW_DESKTOP_SHELL"])
+    return {
+        "client_bootstrap": {
+            "apiHeaderName": LOCAL_API_HEADER,
+            "apiToken": app.config["XPOLICECLAW_API_TOKEN"],
+            "desktopShell": bool(app.config["XPOLICECLAW_DESKTOP_SHELL"]),
+            "adminMode": bool(app.config["XPOLICECLAW_ADMIN_MODE"]),
+            "runtimeRoot": app.config["XPOLICECLAW_RUNTIME_ROOT"],
+            "publicSiteMode": public_site_mode,
+            "requestIsLocal": _is_local_request(),
+            "download": {
+                "available": bool(installer),
+                "url": installer["download_url"] if installer else "",
+                "filename": installer["filename"] if installer else "",
+                "version": installer["version"] if installer else "",
+                "sizeBytes": installer["size_bytes"] if installer else 0,
+            },
+        }
+    }
+
+
 @app.get("/")
 def index():
     return render_template("index.html")
@@ -93,6 +183,19 @@ def architecture():
     if not arch_path.exists():
         abort(404, description="Architecture page is not available.")
     return send_file(arch_path)
+
+
+@app.get("/download/windows/latest")
+def download_windows_installer():
+    installer = _latest_windows_installer()
+    if not installer:
+        abort(404, description="Windows installer is not available.")
+    return send_file(
+        installer["path"],
+        as_attachment=True,
+        download_name=installer["filename"],
+        mimetype="application/vnd.microsoft.portable-executable",
+    )
 
 
 @app.get("/api/health")
@@ -107,6 +210,14 @@ def health():
             "status": "ok",
             "active_job_id": active["id"] if active else None,
             "active_uninstall_id": active_uninstall["id"] if active_uninstall else None,
+            "runtime_root": app.config["XPOLICECLAW_RUNTIME_ROOT"],
+            "data_root": app.config["XPOLICECLAW_DATA_ROOT"],
+            "reports_root": app.config["XPOLICECLAW_REPORT_ROOT"],
+            "release_root": app.config["XPOLICECLAW_RELEASE_ROOT"],
+            "desktop_shell": bool(app.config["XPOLICECLAW_DESKTOP_SHELL"]),
+            "admin_mode": bool(app.config["XPOLICECLAW_ADMIN_MODE"]),
+            "app_name": app.config["XPOLICECLAW_APP_NAME"],
+            "app_version": app.config["XPOLICECLAW_APP_VERSION"],
         }
     )
 
@@ -206,5 +317,11 @@ def get_uninstall_result(uninstall_id: str):
     return api_success(result)
 
 
+def run_app(*, host: str | None = None, port: int | None = None, debug: bool = False) -> None:
+    resolved_host = host or os.getenv("XPOLICECLAW_HOST", "127.0.0.1")
+    resolved_port = int(port or os.getenv("PORT", os.getenv("XPOLICECLAW_PORT", "5000")))
+    app.run(host=resolved_host, port=resolved_port, debug=debug)
+
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=int(os.getenv("PORT", "5000")), debug=False)
+    run_app(debug=False)

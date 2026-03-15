@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script>
+    window.POLICE_CLAW_BOOTSTRAP = {{ client_bootstrap | tojson }};
+  </script>
 </head>
 <body>
   <div class="page-shell">
@@ -22,6 +25,7 @@
       </div>
 
       <div class="topbar-actions">
+        <a id="downloadTopLink" class="primary-link is-hidden" href="/download/windows/latest">Download for Windows</a>
         <a class="text-link" href="/architecture" target="_blank" rel="noreferrer">View Architecture</a>
       </div>
     </header>
@@ -35,6 +39,11 @@
           identify removable targets, inspect scope, launch a background uninstall, and review residuals without
           leaving the report page.
         </p>
+
+        <div class="hero-actions">
+          <a id="heroDownloadLink" class="primary-link is-hidden" href="/download/windows/latest">Download Windows Client</a>
+          <span id="heroDownloadMeta" class="panel-meta">Desktop client downloads appear here when a release package is available.</span>
+        </div>
       </div>
 
       <div class="hero-highlights">
@@ -224,6 +233,19 @@
           <div id="uninstallLastMeta" class="panel-meta">No uninstall task has run yet</div>
 
           <div id="artifactRow" class="artifact-stack"></div>
+        </section>
+
+        <section class="panel side-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="eyebrow">Download</span>
+              <h2>Windows Client</h2>
+            </div>
+          </div>
+          <div id="downloadPanelMeta" class="panel-meta">No release package detected yet</div>
+          <div id="downloadPanelSummary" class="evidence-summary">The hosted site can distribute the signed installer while real scan and uninstall remain local to Windows.</div>
+          <div id="downloadFactList" class="runtime-list"></div>
+          <a id="downloadClientBtn" class="primary-link is-disabled" href="#" aria-disabled="true">Download Windows Client</a>
         </section>
 
         <section class="panel side-panel">

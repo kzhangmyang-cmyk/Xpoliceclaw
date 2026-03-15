@@ -108,7 +108,7 @@ class UninstallService:
         self._persistence_discovery_cache: dict[str, Any] = {}
         self._protected_roots = {
             Path(__file__).resolve().parent,
-            Path.cwd().resolve(),
+            self.scan_service.output_root.parent.resolve(),
             Path.home().resolve(),
         }
         for value in (

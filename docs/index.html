@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Police Claw for Windows</title>
+  <meta name="description" content="Download the Police Claw Windows client and review the architecture of the local scan and remediation workbench.">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f4f0e8;
+      --panel: rgba(255, 251, 245, 0.84);
+      --line: rgba(25, 35, 43, 0.12);
+      --ink: #182026;
+      --muted: #5b6670;
+      --teal: #176f6c;
+      --teal-strong: #238e88;
+      --amber: #a45c18;
+      --rose: #b64232;
+      --shadow: 0 18px 60px rgba(25, 35, 43, 0.12);
+      --radius: 28px;
+      --canvas:
+        radial-gradient(circle at top left, rgba(35, 142, 136, 0.12), transparent 36%),
+        radial-gradient(circle at top right, rgba(164, 92, 24, 0.12), transparent 32%),
+        linear-gradient(135deg, #f4f0e8 0%, #edf5f1 48%, #f9efe6 100%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", "Segoe UI Variable", sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+    }
+
+    a { color: inherit; }
+
+    .page {
+      width: min(1160px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    .topbar,
+    .hero,
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar {
+      border-radius: 24px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(35, 142, 136, 0.18), rgba(182, 66, 50, 0.16));
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .brand strong,
+    h1,
+    h2,
+    h3 { margin: 0; letter-spacing: -0.04em; }
+
+    .brand span,
+    .eyebrow,
+    .meta,
+    .note,
+    .chip {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero {
+      margin-top: 18px;
+      border-radius: 34px;
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+    }
+
+    h1 {
+      margin-top: 10px;
+      font-size: clamp(2.6rem, 5vw, 4.8rem);
+      line-height: 0.95;
+      max-width: 11ch;
+    }
+
+    .hero p,
+    .panel p,
+    li {
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .hero p { margin-top: 16px; max-width: 62ch; }
+
+    .cta-row {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .primary-link,
+    .ghost-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 18px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .primary-link {
+      color: #fff;
+      background: linear-gradient(135deg, var(--teal), var(--teal-strong));
+      box-shadow: 0 16px 30px rgba(35, 142, 136, 0.2);
+    }
+
+    .ghost-link {
+      border: 1px solid rgba(24, 32, 38, 0.12);
+      background: rgba(255, 255, 255, 0.52);
+    }
+
+    .primary-link:hover,
+    .ghost-link:hover { transform: translateY(-1px); }
+
+    .hero-card-stack {
+      display: grid;
+      gap: 12px;
+      align-content: end;
+    }
+
+    .hero-card,
+    .fact-card {
+      border-radius: 22px;
+      padding: 16px 18px;
+      border: 1px solid rgba(24, 32, 38, 0.08);
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .hero-card strong,
+    .fact-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.08rem;
+    }
+
+    .grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      border-radius: 28px;
+      padding: 22px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .download-box {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(24, 32, 38, 0.08);
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .download-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(24, 32, 38, 0.12);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .notice {
+      border-left: 3px solid var(--amber);
+      padding-left: 14px;
+    }
+
+    .notice strong { color: var(--amber); }
+
+    footer {
+      margin-top: 18px;
+      padding: 14px 4px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .grid { grid-template-columns: 1fr; }
+      .facts { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">PC</div>
+        <div>
+          <strong>Police Claw</strong>
+          <span>Windows Scan and Remediation Client</span>
+        </div>
+      </div>
+      <nav class="topbar-actions">
+        <a class="ghost-link" href="./architecture/">View Architecture</a>
+        <a class="ghost-link" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw" target="_blank" rel="noreferrer">GitHub Repo</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Windows Client Download</span>
+        <h1>Install the local workbench, then scan and remove on-device.</h1>
+        <p>
+          Police Claw does not try to scan a visitor browser session. The hosted site distributes the Windows client,
+          while real evidence collection, uninstall actions, reports, and history stay on the local machine after install.
+        </p>
+        <div class="cta-row">
+          <a class="primary-link" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest/download/PoliceClaw-Setup-latest.exe">Download for Windows</a>
+          <a class="ghost-link" href="./download/windows/latest/">Direct Release Link</a>
+        </div>
+        <p class="meta">Latest release asset: <code>PoliceClaw-Setup-latest.exe</code></p>
+      </div>
+      <div class="hero-card-stack">
+        <article class="hero-card">
+          <span class="eyebrow">Detect</span>
+          <strong>Real local background scans</strong>
+          <p>The client reuses the Python engine and runs against the Windows host, not the website.</p>
+        </article>
+        <article class="hero-card">
+          <span class="eyebrow">Respond</span>
+          <strong>Conservative uninstall workflow</strong>
+          <p>Automatic handling stays inside clearly scoped user-level footprints and records leftovers for review.</p>
+        </article>
+        <article class="hero-card">
+          <span class="eyebrow">Audit</span>
+          <strong>Reports and history stay local</strong>
+          <p>JSON, DOCX, scan history, and uninstall history persist under the desktop runtime root.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Capability Scope</span>
+            <h2>What the installed client does</h2>
+          </div>
+        </div>
+        <div class="facts">
+          <article class="fact-card">
+            <span class="eyebrow">Workbench</span>
+            <strong>Real scan and uninstall tasks</strong>
+            <p>The desktop client opens the same workbench UI and runs background jobs locally.</p>
+          </article>
+          <article class="fact-card">
+            <span class="eyebrow">Export</span>
+            <strong>JSON and DOCX reports</strong>
+            <p>Structured evidence and human-readable reports remain available after each local run.</p>
+          </article>
+          <article class="fact-card">
+            <span class="eyebrow">Recovery</span>
+            <strong>Persistent scan and uninstall history</strong>
+            <p>The client restores handled state and residual review from the local runtime directory.</p>
+          </article>
+          <article class="fact-card">
+            <span class="eyebrow">Guardrails</span>
+            <strong>Conservative deletion boundaries</strong>
+            <p>Blocked and manual-review outcomes are normal when the target footprint is broad or ambiguous.</p>
+          </article>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Safety Notes</span>
+            <h2>What the website does not do</h2>
+          </div>
+        </div>
+        <ul>
+          <li>The hosted site does not scan or uninstall anything on the visitor machine.</li>
+          <li>Automatic handling is limited to clearly scoped user-level agent footprints, persistence entries, config paths, cache paths, and explicit binaries.</li>
+          <li>Blocked, terminate-only, and partial outcomes are expected safety states, not application failures.</li>
+          <li>Complex persistence, driver-level residency, browser store extensions, and broad user data trees remain outside automatic cleanup scope.</li>
+        </ul>
+        <div class="download-box" style="margin-top: 18px;">
+          <span class="eyebrow">Release Delivery</span>
+          <strong>GitHub Releases is the installer backend</strong>
+          <div class="download-meta">
+            <span class="chip">GitHub Pages frontend</span>
+            <span class="chip">GitHub Releases downloads</span>
+            <span class="chip">Dynadot custom domain</span>
+          </div>
+          <p class="notice"><strong>Note:</strong> the direct download path on this site redirects to the latest GitHub Release asset.</p>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <p>Hosted site mode for <code>xpoliceclaw.com</code>. Install the Windows client to use the full local scan and remediation workbench.</p>
+    </footer>
+  </main>
+</body>
+</html>

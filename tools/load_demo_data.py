@@ -10,6 +10,7 @@ DEFAULT_FIXTURE = ROOT / "sample_data" / "demo_fixture.json"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app_runtime import ensure_runtime_layout
 from scanner_service import ScanService
 from uninstall_service import UninstallService
 
@@ -35,7 +36,8 @@ def main() -> None:
     fixture_path = args.fixture if args.fixture.is_absolute() else (ROOT / args.fixture).resolve()
     fixture = load_fixture(fixture_path)
 
-    service = ScanService(ROOT / "reports")
+    runtime = ensure_runtime_layout()
+    service = ScanService(runtime.reports)
     uninstall_service = UninstallService(service)
 
     report = fixture.get("report") or {}
@@ -101,7 +103,8 @@ def main() -> None:
         seeded += 1
 
     print(f"Seeded {seeded} demo uninstall history item(s).")
-    print("Open http://127.0.0.1:5000 after starting the Flask app.")
+    print(f"Runtime root: {runtime.root}")
+    print("Open the desktop client or http://127.0.0.1:5000 after starting the local app.")
 
 
 if __name__ == "__main__":
