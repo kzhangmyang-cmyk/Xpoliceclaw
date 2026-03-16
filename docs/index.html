@@ -296,9 +296,9 @@
         </p>
         <div class="cta-row">
           <a id="windowsDownloadLink" class="primary-link" href="./download/windows/latest/">Download for Windows</a>
-          <a id="macosDownloadLink" class="ghost-link disabled-link" href="./download/macos/latest/" aria-disabled="true">macOS Build Pending</a>
+          <a id="macosDownloadLink" class="ghost-link" href="./download/macos/latest/" aria-disabled="false">Download for macOS</a>
         </div>
-        <p id="releaseMeta" class="meta">Checking public release manifests for Windows and macOS.</p>
+        <p id="releaseMeta" class="meta">Windows and macOS release channels are available from the public download site.</p>
       </div>
       <div class="hero-card-stack">
         <article class="hero-card">
@@ -329,10 +329,11 @@
       <div class="facts">
         <article class="fact-card">
           <span class="eyebrow">Windows</span>
-          <strong id="windowsCardTitle">Checking current release</strong>
-          <p id="windowsCardBody">The hosted site is resolving the latest Windows installer details.</p>
+          <strong id="windowsCardTitle">Windows 0.4.0 is ready</strong>
+          <p id="windowsCardBody">The stable Windows installer is published and available through the public release channel.</p>
           <div id="windowsCardFacts" class="download-meta">
-            <span class="chip">Checking</span>
+            <span class="chip">Stable</span>
+            <span class="chip">Windows 10+</span>
           </div>
           <div class="cta-row">
             <a id="windowsCardLink" class="primary-link" href="./download/windows/latest/">Download Windows</a>
@@ -341,13 +342,14 @@
         </article>
         <article class="fact-card">
           <span class="eyebrow">macOS</span>
-          <strong id="macosCardTitle">Preview channel pending</strong>
-          <p id="macosCardBody">The macOS packaging lane is wired into the public site and activates once a signed archive is published.</p>
+          <strong id="macosCardTitle">macOS 0.4.0 is ready</strong>
+          <p id="macosCardBody">The preview macOS archive is published and available through the public release channel.</p>
           <div id="macosCardFacts" class="download-meta">
-            <span class="chip">Pending</span>
+            <span class="chip">Preview</span>
+            <span class="chip">macOS 13+</span>
           </div>
           <div class="cta-row">
-            <a id="macosCardLink" class="ghost-link disabled-link" href="./download/macos/latest/" aria-disabled="true">macOS Build Pending</a>
+            <a id="macosCardLink" class="ghost-link" href="./download/macos/latest/" aria-disabled="false">Download macOS</a>
             <a class="ghost-link" href="./download/macos/latest/">Direct link</a>
           </div>
         </article>
@@ -410,7 +412,7 @@
           <div id="releaseFacts" class="download-meta">
             <span class="chip">Checking latest version</span>
           </div>
-          <p id="releaseNotice" class="notice"><strong>Note:</strong> the direct download path on this site redirects to the latest GitHub Release asset.</p>
+          <p id="releaseNotice" class="notice"><strong>Note:</strong> the direct download paths on this site redirect to the latest GitHub Release assets for Windows and macOS.</p>
         </div>
       </article>
     </section>
