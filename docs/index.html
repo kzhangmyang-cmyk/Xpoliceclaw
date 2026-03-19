@@ -3,762 +3,142 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Police Claw 下载中心</title>
-  <meta name="description" content="下载 Police Claw 的 Windows 或 macOS 客户端，并查看本地扫描与处置工作台的架构说明。">
+  <title>Police Claw 下载控制台</title>
+  <meta name="description" content="下载 Police Claw 的 Windows 与 macOS 客户端，并查看本地扫描与处置工作台的能力边界。">
   <link rel="icon" href="data:,">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --paper: #f4f0e8;
-      --panel: rgba(255, 251, 245, 0.84);
-      --line: rgba(25, 35, 43, 0.12);
-      --ink: #182026;
-      --muted: #5b6670;
-      --teal: #176f6c;
-      --teal-strong: #238e88;
-      --amber: #a45c18;
-      --rose: #b64232;
-      --shadow: 0 18px 60px rgba(25, 35, 43, 0.12);
-      --radius: 28px;
-      --canvas:
-        radial-gradient(circle at top left, rgba(35, 142, 136, 0.12), transparent 36%),
-        radial-gradient(circle at top right, rgba(164, 92, 24, 0.12), transparent 32%),
-        linear-gradient(135deg, #f4f0e8 0%, #edf5f1 48%, #f9efe6 100%);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: "Manrope", "Segoe UI Variable", "PingFang SC", sans-serif;
-      color: var(--ink);
-      background: var(--canvas);
-    }
-
-    a { color: inherit; }
-
-    .page {
-      width: min(1160px, calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 28px 0 44px;
-    }
-
-    .topbar,
-    .hero,
-    .panel {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    .topbar {
-      border-radius: 24px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-mark {
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, rgba(35, 142, 136, 0.18), rgba(182, 66, 50, 0.16));
-      font-weight: 800;
-      letter-spacing: 0.08em;
-    }
-
-    .brand strong,
-    h1,
-    h2,
-    h3 { margin: 0; letter-spacing: -0.04em; }
-
-    .brand span,
-    .eyebrow,
-    .meta,
-    .note,
-    .chip {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .language-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(24, 32, 38, 0.12);
-      background: rgba(255, 255, 255, 0.62);
-    }
-
-    .language-switch select {
-      min-width: 96px;
-      border-radius: 12px;
-      border: 1px solid rgba(24, 32, 38, 0.12);
-      background: rgba(255, 255, 255, 0.86);
-      padding: 8px 10px;
-      color: var(--ink);
-    }
-
-    .hero {
-      margin-top: 18px;
-      border-radius: 34px;
-      padding: 28px;
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 22px;
-    }
-
-    h1 {
-      margin-top: 10px;
-      font-size: clamp(2.6rem, 5vw, 4.8rem);
-      line-height: 0.95;
-      max-width: 11ch;
-    }
-
-    .hero p,
-    .panel p,
-    li {
-      color: var(--muted);
-      line-height: 1.7;
-      margin: 0;
-    }
-
-    .hero p { margin-top: 16px; max-width: 62ch; }
-
-    .cta-row {
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      align-items: center;
-    }
-
-    .primary-link,
-    .ghost-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      padding: 0 18px;
-      border-radius: 18px;
-      text-decoration: none;
-      font-weight: 800;
-      transition: transform 160ms ease, box-shadow 160ms ease;
-    }
-
-    .primary-link {
-      color: #fff;
-      background: linear-gradient(135deg, var(--teal), var(--teal-strong));
-      box-shadow: 0 16px 30px rgba(35, 142, 136, 0.2);
-    }
-
-    .ghost-link {
-      border: 1px solid rgba(24, 32, 38, 0.12);
-      background: rgba(255, 255, 255, 0.52);
-    }
-
-    .primary-link:hover,
-    .ghost-link:hover { transform: translateY(-1px); }
-
-    .disabled-link {
-      pointer-events: none;
-      opacity: 0.52;
-      box-shadow: none;
-    }
-
-    .hero-card-stack {
-      display: grid;
-      gap: 12px;
-      align-content: end;
-    }
-
-    .hero-card,
-    .fact-card {
-      border-radius: 22px;
-      padding: 16px 18px;
-      border: 1px solid rgba(24, 32, 38, 0.08);
-      background: rgba(255, 255, 255, 0.66);
-    }
-
-    .hero-card strong,
-    .fact-card strong {
-      display: block;
-      margin-top: 8px;
-      font-size: 1.08rem;
-    }
-
-    .grid {
-      margin-top: 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .panel {
-      border-radius: 28px;
-      padding: 22px;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: end;
-      margin-bottom: 16px;
-    }
-
-    .facts {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .download-box {
-      display: grid;
-      gap: 14px;
-      padding: 18px;
-      border-radius: 22px;
-      border: 1px solid rgba(24, 32, 38, 0.08);
-      background: rgba(255, 255, 255, 0.66);
-    }
-
-    .download-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .chip {
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(24, 32, 38, 0.12);
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    .notice {
-      border-left: 3px solid var(--amber);
-      padding-left: 14px;
-    }
-
-    .notice strong { color: var(--amber); }
-
-    footer {
-      margin-top: 18px;
-      padding: 14px 4px 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    @media (max-width: 900px) {
-      .hero,
-      .grid { grid-template-columns: 1fr; }
-      .facts { grid-template-columns: 1fr; }
-    }
+    :root{--bg:#f3f5f8;--surface:#fff;--surface-2:#f8fafc;--line:#d9e1ea;--text:#16202b;--muted:#5f6b79;--brand:#175cd3;--brand-soft:#eaf1ff;--ok:#087443;--ok-bg:#e7f6ef;--warn:#9a6700;--warn-bg:#fff4db;--shadow:0 18px 46px rgba(15,23,42,.06)}
+    *{box-sizing:border-box}html,body{margin:0}body{font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--text);background:linear-gradient(180deg,rgba(23,92,211,.04),transparent 180px),var(--bg)}
+    a{color:inherit}.shell{width:min(1220px,calc(100vw - 40px));margin:0 auto;padding:24px 0 36px}.topbar,.hero,.panel,.row{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 20px;border-radius:18px}.brand{display:flex;gap:14px;align-items:center}.mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#175cd3,#155eef);color:#fff;font-weight:700;letter-spacing:.08em}.brand-copy{display:grid;gap:4px}.brand-title{font-weight:700}.brand-sub{font-size:.92rem;color:var(--muted)}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.switch,.ghost{min-height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}.switch{display:inline-flex;align-items:center;gap:10px;padding:0 12px;color:var(--muted);font-size:.88rem}.switch select{border:0;background:transparent;font:inherit;color:var(--text);outline:none}.ghost{display:inline-flex;align-items:center;justify-content:center;padding:0 14px;text-decoration:none;font-size:.92rem;font-weight:600}.scope{display:inline-flex;align-items:center;gap:10px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font-size:.84rem}.dot{width:8px;height:8px;border-radius:999px;background:var(--brand);box-shadow:0 0 0 4px rgba(23,92,211,.12)}
+    .hero{margin-top:18px;border-radius:22px;padding:24px;display:grid;grid-template-columns:1.2fr .95fr;gap:18px}.eyebrow{display:inline-flex;color:var(--brand);font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}h1,h2,p{margin:0}h1{margin-top:12px;font-size:clamp(2rem,4vw,3.4rem);line-height:1.02;letter-spacing:-.05em;max-width:11ch}.lead{margin-top:14px;color:var(--muted);line-height:1.72;max-width:62ch}.cta{margin-top:22px;display:flex;gap:12px;flex-wrap:wrap}.button{min-height:46px;padding:0 18px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700}.button-primary{color:#fff;background:linear-gradient(135deg,#175cd3,#155eef);box-shadow:0 12px 28px rgba(21,94,239,.18)}.button-secondary{color:var(--text);border:1px solid var(--line);background:var(--surface-2)}.button-disabled{opacity:.58;pointer-events:none;box-shadow:none}
+    .summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card,.step,.note{border-radius:14px;border:1px solid var(--line);background:var(--surface-2);padding:16px}.label{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}.value{font-size:1.28rem;font-weight:700;letter-spacing:-.03em}.note-copy{color:var(--muted);font-size:.92rem;line-height:1.5}.workspace{margin-top:18px;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.95fr);gap:18px}.stack{display:grid;gap:18px}.panel{border-radius:20px;padding:20px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}.subcopy{color:var(--muted);font-size:.94rem;line-height:1.58}.pill{min-height:30px;padding:0 10px;border-radius:999px;display:inline-flex;align-items:center;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.pill-ok{color:var(--ok);background:var(--ok-bg)}.pill-warn{color:var(--warn);background:var(--warn-bg)}.table{display:grid;gap:14px}.row{border-radius:18px;padding:18px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.85fr);gap:18px}.row-title{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.platform-title{font-size:1.08rem;font-weight:700;letter-spacing:-.03em}.platform-body,.step p,.note p,.footer{color:var(--muted);line-height:1.66}.chips,.links,.list{display:flex;gap:10px;flex-wrap:wrap}.chip{min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font-size:.82rem;display:inline-flex;align-items:center}.links{font-size:.88rem}.links a{text-decoration:none;color:var(--brand);font-weight:600}.list{display:grid;margin:0;padding:0;list-style:none}.footer{margin-top:16px;padding:0 2px 10px;font-size:.9rem}.footer strong{color:var(--text)}
+    @media(max-width:980px){.hero,.workspace,.row{grid-template-columns:1fr}h1{max-width:none}}@media(max-width:720px){.shell{width:min(1220px,calc(100vw - 24px));padding-top:12px}.summary{grid-template-columns:1fr}.topbar,.hero,.panel{border-radius:16px}}
   </style>
 </head>
 <body>
-  <main class="page">
+  <main class="shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">PC</div>
-        <div>
-          <strong>Police Claw</strong>
-          <span data-i18n="brand.subtitle">本地扫描与处置客户端</span>
+        <div class="mark">PC</div>
+        <div class="brand-copy">
+          <div class="brand-title">Police Claw</div>
+          <div class="brand-sub" data-text="brandSub">本地安全扫描与处置客户端下载</div>
         </div>
       </div>
-      <nav class="topbar-actions">
-        <label class="language-switch" for="languageSelect">
-          <span data-i18n="language.label">语言</span>
-          <select id="languageSelect">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-          </select>
-        </label>
-        <a class="ghost-link" href="./architecture/" data-i18n="topbar.architecture">查看架构</a>
-        <a class="ghost-link" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw" target="_blank" rel="noreferrer" data-i18n="topbar.repo">GitHub 仓库</a>
-      </nav>
+      <div class="actions">
+        <span class="scope"><span class="dot"></span><span data-text="scope">聚焦 AI agents、skills、scripts 与本地执行风险</span></span>
+        <label class="switch"><span data-text="lang">语言</span><select id="languageSelect"><option value="zh">中文</option><option value="en">English</option></select></label>
+        <a class="ghost" href="./architecture/" data-text="arch">查看架构</a>
+        <a class="ghost" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw" target="_blank" rel="noreferrer" data-text="repo">GitHub 仓库</a>
+      </div>
     </header>
 
     <section class="hero">
       <div>
-        <span class="eyebrow" data-i18n="hero.eyebrow">客户端下载</span>
-        <h1 data-i18n="hero.title">先安装本地工作台，再在设备上执行扫描与卸载。</h1>
-        <p data-i18n="hero.body">
-          Police Claw 不会尝试扫描访问者的浏览器会话。这个官网负责分发桌面客户端，
-          真正的证据采集、卸载动作、报告和历史都保留在安装后的本地机器上。
-        </p>
-        <div class="cta-row">
-          <a id="windowsDownloadLink" class="primary-link" href="./download/windows/latest/" data-i18n="hero.windowsCta">下载 Windows 版</a>
-          <a id="macosDownloadLink" class="ghost-link" href="./download/macos/latest/" aria-disabled="false" data-i18n="hero.macosCta">下载 macOS 版</a>
+        <span class="eyebrow" data-text="heroEyebrow">托管下载控制台</span>
+        <h1 data-text="heroTitle">先安装本地客户端，再在设备上执行扫描、证据查看与处置。</h1>
+        <p class="lead" data-text="heroBody">这个站点只负责下载分发与能力说明。真实扫描、卸载任务、JSON 与 DOCX 报告、历史恢复与残留复核，都只在安装后的本地客户端中执行。</p>
+        <div class="cta">
+          <a id="windowsDownloadLink" class="button button-primary" href="./download/windows/latest/" data-text="ctaWindows">下载 Windows 客户端</a>
+          <a id="macosDownloadLink" class="button button-secondary" href="./download/macos/latest/" data-text="ctaMac">下载 macOS 客户端</a>
         </div>
-        <p id="releaseMeta" class="meta">Windows 与 macOS 的发布通道都通过公开下载站提供。</p>
       </div>
-      <div class="hero-card-stack">
-        <article class="hero-card">
-          <span class="eyebrow" data-i18n="hero.card.scan.tag">检测</span>
-          <strong data-i18n="hero.card.scan.title">真实本地后台扫描</strong>
-          <p data-i18n="hero.card.scan.body">客户端复用了 Python 扫描引擎，实际运行在本机，而不是网站服务器。</p>
-        </article>
-        <article class="hero-card">
-          <span class="eyebrow" data-i18n="hero.card.remove.tag">处置</span>
-          <strong data-i18n="hero.card.remove.title">保守型卸载流程</strong>
-          <p data-i18n="hero.card.remove.body">自动处置只覆盖边界清晰的用户级足迹，并把残留项保留下来供后续复核。</p>
-        </article>
-        <article class="hero-card">
-          <span class="eyebrow" data-i18n="hero.card.audit.tag">审计</span>
-          <strong data-i18n="hero.card.audit.title">报告和历史都留在本地</strong>
-          <p data-i18n="hero.card.audit.body">JSON、DOCX、扫描历史和卸载历史会保存在桌面客户端的运行时目录下。</p>
-        </article>
+      <div class="summary">
+        <article class="card"><span class="label">Windows</span><strong id="windowsSummaryValue" class="value">--</strong><span id="windowsSummaryNote" class="note-copy">--</span></article>
+        <article class="card"><span class="label">macOS</span><strong id="macosSummaryValue" class="value">--</strong><span id="macosSummaryNote" class="note-copy">--</span></article>
+        <article class="card"><span class="label" data-text="channelLabel">发布通道</span><strong class="value" data-text="channelValue">GitHub Pages + Releases</strong><span class="note-copy" data-text="channelNote">网站只负责分发，安装包通过公开 Release 交付。</span></article>
+        <article class="card"><span class="label" data-text="boundaryLabel">能力边界</span><strong class="value" data-text="boundaryValue">Focused Workbench</strong><span class="note-copy" data-text="boundaryNote">聚焦 AI agents、skills、scripts 与本地执行风险，不扩展为通用安全卫士。</span></article>
       </div>
     </section>
 
-    <section class="panel" style="margin-top: 20px;">
-      <div class="panel-head">
-        <div>
-          <span class="eyebrow" data-i18n="platforms.eyebrow">平台下载</span>
-          <h2 data-i18n="platforms.title">当前发布通道</h2>
-        </div>
+    <section class="workspace">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow" data-text="platformEyebrow">平台状态</span>
+              <h2 data-text="platformTitle">当前可用客户端下载</h2>
+              <p class="subcopy" data-text="platformBody">这里显示公开发布的 Windows 与 macOS 安装包状态。按钮始终指向 GitHub Releases 的最新稳定资产。</p>
+            </div>
+            <span id="releaseStatusPill" class="pill pill-warn">Checking</span>
+          </div>
+          <div class="table">
+            <article class="row">
+              <div>
+                <div class="row-title"><span id="windowsCardTitle" class="platform-title">Windows</span><span id="windowsCardStatus" class="pill pill-warn">Pending</span></div>
+                <p id="windowsCardBody" class="platform-body">正在检查 Windows 发布状态。</p>
+                <div id="windowsCardFacts" class="chips"></div>
+              </div>
+              <div class="stack">
+                <a id="windowsCardLink" class="button button-primary" href="./download/windows/latest/" data-text="downloadWindows">下载 Windows</a>
+                <div class="links"><a href="./download/windows/latest/" data-text="openPath">打开下载页</a><a href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest" target="_blank" rel="noreferrer" data-text="openRelease">打开 Release 页面</a></div>
+              </div>
+            </article>
+            <article class="row">
+              <div>
+                <div class="row-title"><span id="macosCardTitle" class="platform-title">macOS</span><span id="macosCardStatus" class="pill pill-warn">Pending</span></div>
+                <p id="macosCardBody" class="platform-body">正在检查 macOS 发布状态。</p>
+                <div id="macosCardFacts" class="chips"></div>
+              </div>
+              <div class="stack">
+                <a id="macosCardLink" class="button button-secondary" href="./download/macos/latest/" data-text="downloadMac">下载 macOS</a>
+                <div class="links"><a href="./download/macos/latest/" data-text="openPath">打开下载页</a><a href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest" target="_blank" rel="noreferrer" data-text="openRelease">打开 Release 页面</a></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><span class="eyebrow" data-text="flowEyebrow">交付链路</span><h2 data-text="flowTitle">官网、发布与本地工作台的边界</h2></div></div>
+          <ul class="list">
+            <li class="step"><strong data-text="flow1Title">1. GitHub Pages 托管下载控制台</strong><p data-text="flow1Body">xpoliceclaw.com 只展示下载入口、平台状态、能力边界与架构说明。</p></li>
+            <li class="step"><strong data-text="flow2Title">2. GitHub Releases 分发桌面安装包</strong><p data-text="flow2Body">Windows 与 macOS 安装包都由公开 Release 提供，页面按钮和稳定直链都指向这里。</p></li>
+            <li class="step"><strong data-text="flow3Title">3. 本地客户端执行真实扫描与处置</strong><p data-text="flow3Body">安装后，扫描、证据、卸载、历史恢复与残留复核都在用户自己的设备上完成。</p></li>
+          </ul>
+        </section>
       </div>
-      <div class="facts">
-        <article class="fact-card">
-          <span class="eyebrow">Windows</span>
-          <strong id="windowsCardTitle">Windows 版本可用</strong>
-          <p id="windowsCardBody">稳定版 Windows 安装包已经发布，可通过公开下载通道获取。</p>
-          <div id="windowsCardFacts" class="download-meta">
-            <span class="chip">Stable</span>
-            <span class="chip">Windows 10+</span>
-          </div>
-          <div class="cta-row">
-            <a id="windowsCardLink" class="primary-link" href="./download/windows/latest/">下载 Windows</a>
-            <a class="ghost-link" href="./download/windows/latest/" data-i18n="platforms.directLink">直接链接</a>
-          </div>
-        </article>
-        <article class="fact-card">
-          <span class="eyebrow">macOS</span>
-          <strong id="macosCardTitle">macOS 版本可用</strong>
-          <p id="macosCardBody">macOS 客户端归档已发布，可通过公开下载通道获取。</p>
-          <div id="macosCardFacts" class="download-meta">
-            <span class="chip">Stable</span>
-            <span class="chip">macOS 13+</span>
-          </div>
-          <div class="cta-row">
-            <a id="macosCardLink" class="ghost-link" href="./download/macos/latest/" aria-disabled="false">下载 macOS</a>
-            <a class="ghost-link" href="./download/macos/latest/" data-i18n="platforms.directLink">直接链接</a>
-          </div>
-        </article>
-      </div>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-head"><div><span class="eyebrow">Safety Notes</span><h2 data-text="notesTitle">能力边界与风险声明</h2></div></div>
+          <ul class="list">
+            <li class="note"><strong data-text="note1Title">只分发客户端，不远程扫描</strong><p data-text="note1Body">官网不会扫描访问者设备，也不会在浏览器里执行卸载动作。</p></li>
+            <li class="note"><strong data-text="note2Title">自动处置是保守型的</strong><p data-text="note2Body">Blocked、Partial、Manual Review 都是正常结果，不代表系统异常。</p></li>
+            <li class="note"><strong data-text="note3Title">只聚焦 AI agents 与本地执行风险</strong><p data-text="note3Body">产品不扩展为通用杀毒或全盘系统防护工具。</p></li>
+            <li class="note"><strong data-text="note4Title">报告、历史与证据保留在本地</strong><p data-text="note4Body">JSON、DOCX、scan history 与 uninstall history 都保存在客户端运行时目录。</p></li>
+          </ul>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><span class="eyebrow">Release Summary</span><h2 data-text="releaseTitle">当前公开发布摘要</h2></div></div>
+          <ul class="list">
+            <li class="note"><strong id="releaseMetaTitle">--</strong><p id="releaseMetaBody">--</p></li>
+            <li class="note"><strong data-text="stableTitle">稳定下载路径</strong><p data-text="stableBody">官网下载页会继续跳转到 GitHub Releases 的最新稳定资产，不需要手动修改按钮链接。</p></li>
+            <li class="note"><strong data-text="historyTitle">发布记录</strong><p data-text="historyBody">如需核对版本、发布日期或平台资产，可以直接打开 GitHub Release 页面查看完整交付记录。</p></li>
+          </ul>
+        </section>
+      </aside>
     </section>
 
-    <section class="grid">
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <span class="eyebrow" data-i18n="notes.eyebrow">能力边界</span>
-            <h2 data-i18n="notes.title">上线说明</h2>
-          </div>
-        </div>
-        <ul>
-          <li data-i18n="notes.item1">官网只负责下载与说明，不会对远端浏览器执行扫描或卸载。</li>
-          <li data-i18n="notes.item2">真实扫描、可卸载目标推导和卸载任务都只在已安装的本地客户端中执行。</li>
-          <li data-i18n="notes.item3">自动处置采用保守策略；受限目标、部分完成和人工复核都属于正常结果。</li>
-          <li data-i18n="notes.item4">下载链接会始终指向 GitHub Releases 中的最新稳定资产。</li>
-        </ul>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <span class="eyebrow" data-i18n="release.eyebrow">发布交付</span>
-            <h2 data-i18n="release.title">下载链路</h2>
-          </div>
-        </div>
-        <div class="download-box">
-          <span class="eyebrow" data-i18n="release.boxEyebrow">发布架构</span>
-          <strong data-i18n="release.boxTitle">GitHub Releases 负责安装包分发</strong>
-          <div class="download-meta">
-            <span class="chip">GitHub Pages</span>
-            <span class="chip">GitHub Releases</span>
-            <span class="chip">Dynadot</span>
-          </div>
-          <div id="releaseFacts" class="download-meta">
-            <span class="chip" data-i18n="release.checking">正在检查最新版本</span>
-          </div>
-          <p id="releaseNotice" class="notice"><strong data-i18n="release.noticeLabel">说明：</strong> <span id="releaseNoticeBody">本页上的直链会自动跳转到 GitHub Releases 中最新的 Windows 或 macOS 安装包。</span></p>
-        </div>
-      </article>
-    </section>
-
-    <footer>
-      <p data-i18n="footer.body">这里是 <code>xpoliceclaw.com</code> 的官网模式。要使用完整的本地扫描与处置工作台，请安装 Windows 或 macOS 客户端。</p>
-    </footer>
+    <footer class="footer"><strong data-text="footerStrong">Hosted site mode.</strong> <span data-text="footerBody">安装 Windows 或 macOS 客户端后，才能使用完整的本地扫描、Evidence 工作台、卸载编排与历史恢复能力。</span></footer>
   </main>
 
   <script>
     (() => {
-      const LANGUAGE_STORAGE_KEY = "policeClawLocale";
-      const manifests = {
-        windows: "./download/windows/latest/manifest.json",
-        macos: "./download/macos/latest/manifest.json",
-      };
-
-      const copy = {
-        zh: {
-          title: "Police Claw 下载中心",
-          description: "下载 Police Claw 的 Windows 或 macOS 客户端，并查看本地扫描与处置工作台的架构说明。",
-          "brand.subtitle": "本地扫描与处置客户端",
-          "language.label": "语言",
-          "topbar.architecture": "查看架构",
-          "topbar.repo": "GitHub 仓库",
-          "hero.eyebrow": "客户端下载",
-          "hero.title": "先安装本地工作台，再在设备上执行扫描与卸载。",
-          "hero.body": "Police Claw 不会尝试扫描访问者的浏览器会话。这个官网负责分发桌面客户端，真正的证据采集、卸载动作、报告和历史都保留在安装后的本地机器上。",
-          "hero.windowsCta": "下载 Windows 版",
-          "hero.macosCta": "下载 macOS 版",
-          "hero.card.scan.tag": "检测",
-          "hero.card.scan.title": "真实本地后台扫描",
-          "hero.card.scan.body": "客户端复用了 Python 扫描引擎，实际运行在本机，而不是网站服务器。",
-          "hero.card.remove.tag": "处置",
-          "hero.card.remove.title": "保守型卸载流程",
-          "hero.card.remove.body": "自动处置只覆盖边界清晰的用户级足迹，并把残留项保留下来供后续复核。",
-          "hero.card.audit.tag": "审计",
-          "hero.card.audit.title": "报告和历史都留在本地",
-          "hero.card.audit.body": "JSON、DOCX、扫描历史和卸载历史会保存在桌面客户端的运行时目录下。",
-          "platforms.eyebrow": "平台下载",
-          "platforms.title": "Windows 与 macOS 客户端已可用",
-          "platforms.directLink": "直接链接",
-          "notes.eyebrow": "能力边界",
-          "notes.title": "上线说明",
-          "notes.item1": "官网只负责下载与说明，不会对远端浏览器执行扫描或卸载。",
-          "notes.item2": "真实扫描、可卸载目标推导和卸载任务都只在已安装的本地客户端中执行。",
-          "notes.item3": "自动处置采用保守策略；受限目标、部分完成和人工复核都属于正常结果。",
-          "notes.item4": "下载链接会始终指向 GitHub Releases 中的最新稳定资产。",
-          "release.eyebrow": "发布交付",
-          "release.title": "当前公开下载路径",
-          "release.boxEyebrow": "发布架构",
-          "release.boxTitle": "GitHub Releases 负责分发桌面安装包",
-          "release.checking": "正在检查最新版本",
-          "release.noticeLabel": "说明：",
-          "footer.body": "这里是 <code>xpoliceclaw.com</code> 的官网模式。要使用完整的本地扫描与处置工作台，请安装 Windows 或 macOS 客户端。",
-          releaseMeta: "Windows：<code>{windows}</code> / macOS：<code>{macos}</code>",
-          releaseFallback: "发布清单暂时不可用。",
-          releaseFactsUnavailable: "发布清单不可用",
-          releaseFactsPages: "GitHub Pages",
-          releaseFactsReleases: "GitHub Releases",
-          platformWindowsReady: "Windows {version} 已可用",
-          platformWindowsPending: "Windows 发布状态待确认",
-          platformWindowsBody: "稳定版 Windows 安装包已经发布，可通过公开下载通道获取。",
-          platformWindowsPendingBody: "暂时还无法确认 Windows 安装包的公开发布状态，请直接打开发布页检查。",
-          platformMacReady: "macOS {version} 已可用",
-          platformMacPending: "macOS 发布状态待确认",
-          platformMacBody: "macOS 客户端压缩包已经发布，可通过公开下载通道获取。",
-          platformMacPendingBody: "暂时还无法确认 macOS 安装包的公开发布状态，请直接打开发布页检查。",
-          buttonWindows: "下载 Windows 版",
-          buttonWindowsPending: "查看 Windows 状态",
-          buttonMac: "下载 macOS 版",
-          buttonMacPending: "查看 macOS 状态",
-          cardWindows: "下载 Windows",
-          cardMac: "下载 macOS",
-          directPathNote: "本页的直链会自动跳转到 GitHub Releases 中最新的 Windows 或 macOS 安装包。",
-          manifestFallbackNote: "暂时无法读取最新发布清单，请稍后重试或直接打开 GitHub Releases。",
-          statusAvailable: "可用",
-          statusPending: "待确认",
-          statusCurrent: "当前版本",
-        },
-        en: {
-          title: "Police Claw Downloads",
-          description: "Download the Police Claw Windows or macOS client and review the architecture of the local scan and remediation workbench.",
-          "brand.subtitle": "Local Scan and Remediation Client",
-          "language.label": "Language",
-          "topbar.architecture": "View Architecture",
-          "topbar.repo": "GitHub Repo",
-          "hero.eyebrow": "Client Downloads",
-          "hero.title": "Install the local workbench, then run scans and removals on-device.",
-          "hero.body": "Police Claw does not scan a visitor browser session. The hosted site distributes desktop clients, while evidence collection, uninstall actions, reports, and history stay on the local machine after install.",
-          "hero.windowsCta": "Download for Windows",
-          "hero.macosCta": "Download for macOS",
-          "hero.card.scan.tag": "Detect",
-          "hero.card.scan.title": "Real local background scans",
-          "hero.card.scan.body": "The client reuses the Python engine and runs against the local machine instead of the website.",
-          "hero.card.remove.tag": "Respond",
-          "hero.card.remove.title": "Conservative uninstall workflow",
-          "hero.card.remove.body": "Automatic handling only touches tightly scoped user-level footprints and keeps leftovers visible for review.",
-          "hero.card.audit.tag": "Audit",
-          "hero.card.audit.title": "Reports and history stay local",
-          "hero.card.audit.body": "JSON, DOCX, scan history, and uninstall history remain under the desktop runtime root.",
-          "platforms.eyebrow": "Platform Downloads",
-          "platforms.title": "Windows and macOS are available",
-          "platforms.directLink": "Direct link",
-          "notes.eyebrow": "Capability Scope",
-          "notes.title": "Delivery Notes",
-          "notes.item1": "The hosted site is only for downloads and documentation; it never scans or removes from a remote browser session.",
-          "notes.item2": "Real scans, removable target inference, and uninstall tasks only run inside the installed local client.",
-          "notes.item3": "Automatic handling is conservative. Blocked targets, partial runs, and manual review are normal outcomes.",
-          "notes.item4": "Download links always resolve to the latest stable assets on GitHub Releases.",
-          "release.eyebrow": "Release Delivery",
-          "release.title": "Current Public Download Paths",
-          "release.boxEyebrow": "Release Architecture",
-          "release.boxTitle": "GitHub Releases distributes the desktop installers",
-          "release.checking": "Checking latest version",
-          "release.noticeLabel": "Note:",
-          "footer.body": "This is the hosted site mode for <code>xpoliceclaw.com</code>. Install the Windows or macOS client to use the full local scan and remediation workbench.",
-          releaseMeta: "Windows: <code>{windows}</code> / macOS: <code>{macos}</code>",
-          releaseFallback: "Release manifests are temporarily unavailable.",
-          releaseFactsUnavailable: "Release manifest unavailable",
-          releaseFactsPages: "GitHub Pages",
-          releaseFactsReleases: "GitHub Releases",
-          platformWindowsReady: "Windows {version} is available",
-          platformWindowsPending: "Windows release status pending",
-          platformWindowsBody: "The stable Windows installer is published and available through the public release channel.",
-          platformWindowsPendingBody: "The Windows public release status could not be confirmed yet. Open the release page directly to verify availability.",
-          platformMacReady: "macOS {version} is available",
-          platformMacPending: "macOS release status pending",
-          platformMacBody: "The macOS client archive is published and available through the public release channel.",
-          platformMacPendingBody: "The macOS public release status could not be confirmed yet. Open the release page directly to verify availability.",
-          buttonWindows: "Download for Windows",
-          buttonWindowsPending: "View Windows status",
-          buttonMac: "Download for macOS",
-          buttonMacPending: "View macOS status",
-          cardWindows: "Download Windows",
-          cardMac: "Download macOS",
-          directPathNote: "The direct download paths on this site redirect to the latest Windows and macOS assets on GitHub Releases.",
-          manifestFallbackNote: "The latest release manifests are temporarily unavailable. Try again later or open GitHub Releases directly.",
-          statusAvailable: "available",
-          statusPending: "status pending",
-          statusCurrent: "current",
-        },
-      };
-
-      const nodes = {
-        languageSelect: document.getElementById("languageSelect"),
-        windowsDownloadLink: document.getElementById("windowsDownloadLink"),
-        macosDownloadLink: document.getElementById("macosDownloadLink"),
-        windowsCardTitle: document.getElementById("windowsCardTitle"),
-        windowsCardBody: document.getElementById("windowsCardBody"),
-        windowsCardFacts: document.getElementById("windowsCardFacts"),
-        windowsCardLink: document.getElementById("windowsCardLink"),
-        macosCardTitle: document.getElementById("macosCardTitle"),
-        macosCardBody: document.getElementById("macosCardBody"),
-        macosCardFacts: document.getElementById("macosCardFacts"),
-        macosCardLink: document.getElementById("macosCardLink"),
-        releaseMeta: document.getElementById("releaseMeta"),
-        releaseFacts: document.getElementById("releaseFacts"),
-        releaseNoticeBody: document.getElementById("releaseNoticeBody"),
-      };
-
-      const state = {
-        language: resolvePreferredLanguage(),
-        manifests: {
-          windows: null,
-          macos: null,
-        },
-      };
-
-      function resolvePreferredLanguage() {
-        try {
-          const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-          if (stored === "zh" || stored === "en") {
-            return stored;
-          }
-        } catch (error) {}
-        return String(navigator.language || "zh").toLowerCase().startsWith("en") ? "en" : "zh";
-      }
-
-      function translate(key) {
-        return (copy[state.language] && copy[state.language][key]) || (copy.zh && copy.zh[key]) || key;
-      }
-
-      function format(template, values) {
-        return Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{${key}}`, value), template);
-      }
-
-      function formatFileSize(value) {
-        const numeric = Number(value || 0);
-        if (!numeric) return "--";
-        const units = ["B", "KB", "MB", "GB"];
-        let size = numeric;
-        let unitIndex = 0;
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex += 1;
-        }
-        const precision = unitIndex === 0 ? 0 : size >= 100 ? 0 : size >= 10 ? 1 : 2;
-        return `${size.toFixed(precision)} ${units[unitIndex]}`;
-      }
-
-      function formatPublished(value) {
-        if (!value) return "--";
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return String(value);
-        return new Intl.DateTimeFormat(state.language === "en" ? "en-US" : "zh-CN", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).format(date);
-      }
-
-      function setButtonState(node, available, enabledLabel, disabledLabel, href) {
-        node.textContent = available ? enabledLabel : disabledLabel;
-        node.href = href;
-        node.classList.toggle("disabled-link", !available);
-        node.setAttribute("aria-disabled", available ? "false" : "true");
-      }
-
-      function applyStaticCopy() {
-        document.documentElement.lang = state.language === "en" ? "en-US" : "zh-CN";
-        document.title = translate("title");
-        document.querySelector('meta[name="description"]').setAttribute("content", translate("description"));
-        nodes.languageSelect.value = state.language;
-        document.querySelectorAll("[data-i18n]").forEach((node) => {
-          if (node.dataset.i18n === "footer.body") {
-            node.innerHTML = translate(node.dataset.i18n);
-            return;
-          }
-          node.textContent = translate(node.dataset.i18n);
-        });
-      }
-
-      function updatePlatformCards() {
-        const windows = state.manifests.windows;
-        const macos = state.manifests.macos;
-        const windowsAvailable = Boolean(windows && windows.available && windows.download_url);
-        const macosAvailable = Boolean(macos && macos.available && macos.download_url);
-
-        setButtonState(
-          nodes.windowsDownloadLink,
-          windowsAvailable,
-          translate("buttonWindows"),
-          translate("buttonWindowsPending"),
-          windowsAvailable ? windows.download_url : "./download/windows/latest/",
-        );
-        setButtonState(
-          nodes.windowsCardLink,
-          windowsAvailable,
-          translate("cardWindows"),
-          translate("buttonWindowsPending"),
-          windowsAvailable ? windows.download_url : "./download/windows/latest/",
-        );
-        nodes.windowsCardTitle.textContent = windowsAvailable
-          ? format(translate("platformWindowsReady"), { version: windows.version || translate("statusCurrent") })
-          : translate("platformWindowsPending");
-        nodes.windowsCardBody.textContent = windowsAvailable ? translate("platformWindowsBody") : translate("platformWindowsPendingBody");
-        nodes.windowsCardFacts.innerHTML = [
-          windows && (windows.release_tag || windows.version || "--"),
-          windows ? formatFileSize(windows.installer_size_bytes) : "--",
-          windows && windows.minimum_os ? windows.minimum_os : "Windows 10+",
-          windows ? formatPublished(windows.published_at) : "--",
-        ].map((item) => `<span class="chip">${item || "--"}</span>`).join("");
-
-        setButtonState(
-          nodes.macosDownloadLink,
-          macosAvailable,
-          translate("buttonMac"),
-          translate("buttonMacPending"),
-          macosAvailable ? macos.download_url : "./download/macos/latest/",
-        );
-        setButtonState(
-          nodes.macosCardLink,
-          macosAvailable,
-          translate("cardMac"),
-          translate("buttonMacPending"),
-          macosAvailable ? macos.download_url : "./download/macos/latest/",
-        );
-        nodes.macosCardTitle.textContent = macosAvailable
-          ? format(translate("platformMacReady"), { version: macos.version || translate("statusCurrent") })
-          : translate("platformMacPending");
-        nodes.macosCardBody.textContent = macosAvailable ? translate("platformMacBody") : translate("platformMacPendingBody");
-        nodes.macosCardFacts.innerHTML = [
-          macos && (macos.release_tag || macos.version || "--"),
-          macos ? (macos.minimum_os || "macOS 13+") : "macOS 13+",
-          macos ? formatPublished(macos.published_at) : "--",
-          macosAvailable ? translate("statusAvailable") : translate("statusPending"),
-        ].map((item) => `<span class="chip">${item || "--"}</span>`).join("");
-
-        nodes.releaseMeta.innerHTML = format(translate("releaseMeta"), {
-          windows: windows ? (windows.release_tag || windows.version || translate("statusCurrent")) : "--",
-          macos: macos ? (macos.release_tag || macos.version || translate("statusPending")) : "--",
-        });
-        nodes.releaseFacts.innerHTML = [
-          `Windows ${windowsAvailable ? translate("statusAvailable") : translate("statusPending")}`,
-          `macOS ${macosAvailable ? translate("statusAvailable") : translate("statusPending")}`,
-          translate("releaseFactsReleases"),
-          translate("releaseFactsPages"),
-        ].map((item) => `<span class="chip">${item}</span>`).join("");
-        nodes.releaseNoticeBody.textContent = translate("directPathNote");
-      }
-
-      function renderManifestFallback() {
-        nodes.releaseMeta.textContent = translate("releaseFallback");
-        nodes.releaseFacts.innerHTML = `<span class="chip">${translate("releaseFactsUnavailable")}</span>`;
-        nodes.releaseNoticeBody.textContent = translate("manifestFallbackNote");
-      }
-
-      async function loadManifest(url) {
-        const response = await fetch(url, { headers: { Accept: "application/json" } });
-        if (!response.ok) {
-          throw new Error("manifest unavailable");
-        }
-        return response.json();
-      }
-
-      async function refreshManifests() {
-        try {
-          const [windows, macos] = await Promise.all([
-            loadManifest(manifests.windows),
-            loadManifest(manifests.macos),
-          ]);
-          state.manifests.windows = windows;
-          state.manifests.macos = macos;
-          updatePlatformCards();
-        } catch (error) {
-          renderManifestFallback();
-        }
-      }
-
-      nodes.languageSelect.addEventListener("change", (event) => {
-        state.language = event.target.value === "en" ? "en" : "zh";
-        try {
-          window.localStorage.setItem(LANGUAGE_STORAGE_KEY, state.language);
-        } catch (error) {}
-        applyStaticCopy();
-        updatePlatformCards();
-      });
-
-      applyStaticCopy();
-      refreshManifests();
+      const KEY="policeClawLocale",URLS={windows:"./download/windows/latest/manifest.json",macos:"./download/macos/latest/manifest.json"};
+      const TEXT={zh:{brandSub:"本地安全扫描与处置客户端下载",scope:"聚焦 AI agents、skills、scripts 与本地执行风险",lang:"语言",arch:"查看架构",repo:"GitHub 仓库",heroEyebrow:"托管下载控制台",heroTitle:"先安装本地客户端，再在设备上执行扫描、证据查看与处置。",heroBody:"这个站点只负责下载分发与能力说明。真实扫描、卸载任务、JSON 与 DOCX 报告、历史恢复与残留复核，都只在安装后的本地客户端中执行。",ctaWindows:"下载 Windows 客户端",ctaMac:"下载 macOS 客户端",channelLabel:"发布通道",channelValue:"GitHub Pages + Releases",channelNote:"网站只负责分发，安装包通过公开 Release 交付。",boundaryLabel:"能力边界",boundaryValue:"Focused Workbench",boundaryNote:"聚焦 AI agents、skills、scripts 与本地执行风险，不扩展为通用安全卫士。",platformEyebrow:"平台状态",platformTitle:"当前可用客户端下载",platformBody:"这里显示公开发布的 Windows 与 macOS 安装包状态。按钮始终指向 GitHub Releases 的最新稳定资产。",downloadWindows:"下载 Windows",downloadMac:"下载 macOS",openPath:"打开下载页",openRelease:"打开 Release 页面",flowEyebrow:"交付链路",flowTitle:"官网、发布与本地工作台的边界",flow1Title:"1. GitHub Pages 托管下载控制台",flow1Body:"xpoliceclaw.com 只展示下载入口、平台状态、能力边界与架构说明。",flow2Title:"2. GitHub Releases 分发桌面安装包",flow2Body:"Windows 与 macOS 安装包都由公开 Release 提供，页面按钮和稳定直链都指向这里。",flow3Title:"3. 本地客户端执行真实扫描与处置",flow3Body:"安装后，扫描、证据、卸载、历史恢复与残留复核都在用户自己的设备上完成。",notesTitle:"能力边界与风险声明",note1Title:"只分发客户端，不远程扫描",note1Body:"官网不会扫描访问者设备，也不会在浏览器里执行卸载动作。",note2Title:"自动处置是保守型的",note2Body:"Blocked、Partial、Manual Review 都是正常结果，不代表系统异常。",note3Title:"只聚焦 AI agents 与本地执行风险",note3Body:"产品不扩展为通用杀毒或全盘系统防护工具。",note4Title:"报告、历史与证据保留在本地",note4Body:"JSON、DOCX、scan history 与 uninstall history 都保存在客户端运行时目录。",releaseTitle:"当前公开发布摘要",stableTitle:"稳定下载路径",stableBody:"官网下载页会继续跳转到 GitHub Releases 的最新稳定资产，不需要手动修改按钮链接。",historyTitle:"发布记录",historyBody:"如需核对版本、发布日期或平台资产，可以直接打开 GitHub Release 页面查看完整交付记录。",footerStrong:"Hosted site mode.",footerBody:"安装 Windows 或 macOS 客户端后，才能使用完整的本地扫描、Evidence 工作台、卸载编排与历史恢复能力。",available:"已可用",pending:"待确认",current:"当前版本",awaiting:"正在读取清单并核对最新稳定版本。",ready:"公开稳定通道已接通。",published:"Published",checking:"Checking",partial:"Partial",wTitle:"Windows {v} 已可用",wTitlePending:"Windows 发布状态待确认",wBody:"稳定版 Windows 安装包已发布，可通过公开下载通道直接获取。",wBodyPending:"暂时无法确认 Windows 安装包的公开发布状态，请先打开下载页或 Release 页面核对。",mTitle:"macOS {v} 已可用",mTitlePending:"macOS 发布状态待确认",mBody:"稳定版 macOS 压缩包已发布，可通过公开下载通道直接获取。",mBodyPending:"暂时无法确认 macOS 安装包的公开发布状态，请先打开下载页或 Release 页面核对。",metaTitle:"公开发布状态",metaBody:"Windows：{w} / macOS：{m}",fv:"版本 {v}",fs:"大小 {v}",fo:"最低系统 {v}",fp:"发布于 {v}",fu:"清单不可用"},en:{brandSub:"Desktop client downloads for the local security workbench",scope:"Focused on AI agents, skills, scripts, and local execution risks",lang:"Language",arch:"View Architecture",repo:"GitHub Repo",heroEyebrow:"Hosted Download Console",heroTitle:"Install the local client first, then run scans, evidence review, and remediation on-device.",heroBody:"This site only handles distribution and capability framing. Real scans, uninstall tasks, JSON and DOCX reports, history recovery, and residual review all execute inside the installed local client.",ctaWindows:"Download Windows Client",ctaMac:"Download macOS Client",channelLabel:"Delivery Channel",channelValue:"GitHub Pages + Releases",channelNote:"The site handles distribution only; installer assets are delivered through public releases.",boundaryLabel:"Boundary",boundaryValue:"Focused Workbench",boundaryNote:"Focused on AI agents, skills, scripts, and local execution risks instead of general endpoint protection.",platformEyebrow:"Platform Status",platformTitle:"Currently Available Client Downloads",platformBody:"This surface shows the public Windows and macOS installer status. Buttons always point to the latest stable assets on GitHub Releases.",downloadWindows:"Download Windows",downloadMac:"Download macOS",openPath:"Open download page",openRelease:"Open release page",flowEyebrow:"Delivery Flow",flowTitle:"The boundary between the hosted site, releases, and the local workbench",flow1Title:"1. GitHub Pages hosts the download console",flow1Body:"xpoliceclaw.com only shows download paths, platform status, capability boundaries, and architecture notes.",flow2Title:"2. GitHub Releases ships the desktop installers",flow2Body:"Both Windows and macOS assets are published through public releases, and both the buttons and stable direct paths resolve there.",flow3Title:"3. The local client executes real scans and remediation",flow3Body:"After install, scanning, evidence, uninstall, history recovery, and residual review all happen on the user's device.",notesTitle:"Capability boundaries and risk notes",note1Title:"Client distribution only, no remote scanning",note1Body:"The hosted site never scans visitor devices and never performs uninstall actions in the browser.",note2Title:"Automatic remediation stays conservative",note2Body:"Blocked, Partial, and Manual Review are normal outcomes, not product failures.",note3Title:"Focused on AI agents and local execution risks",note3Body:"The product does not expand into a general antivirus or full-system hardening tool.",note4Title:"Reports, history, and evidence remain local",note4Body:"JSON, DOCX, scan history, and uninstall history are stored under the client runtime root.",releaseTitle:"Current public release summary",stableTitle:"Stable download path",stableBody:"Hosted download pages keep redirecting to the latest stable assets on GitHub Releases, so button URLs do not need manual edits.",historyTitle:"Release history",historyBody:"If you need to inspect versions, publish dates, or platform assets, open the GitHub release page for the complete delivery record.",footerStrong:"Hosted site mode.",footerBody:"Install the Windows or macOS client to use the full local scan, evidence workbench, uninstall orchestration, and history recovery experience.",available:"available",pending:"pending",current:"current",awaiting:"Reading manifests and verifying the latest stable assets.",ready:"The public stable channel is online.",published:"Published",checking:"Checking",partial:"Partial",wTitle:"Windows {v} is available",wTitlePending:"Windows release status pending",wBody:"The stable Windows installer is published and can be downloaded through the public release path.",wBodyPending:"The public Windows installer status could not be confirmed yet. Open the download page or release page to verify it.",mTitle:"macOS {v} is available",mTitlePending:"macOS release status pending",mBody:"The stable macOS archive is published and can be downloaded through the public release path.",mBodyPending:"The public macOS package status could not be confirmed yet. Open the download page or release page to verify it.",metaTitle:"Public release status",metaBody:"Windows: {w} / macOS: {m}",fv:"Version {v}",fs:"Size {v}",fo:"Minimum OS {v}",fp:"Published {v}",fu:"Manifest unavailable"}};
+      const S={lang:(()=>{try{const v=localStorage.getItem(KEY);if(v==="zh"||v==="en")return v}catch(e){}return (navigator.language||"zh").toLowerCase().startsWith("en")?"en":"zh"})(),manifests:{windows:null,macos:null}},N={languageSelect:document.getElementById("languageSelect"),windowsDownloadLink:document.getElementById("windowsDownloadLink"),macosDownloadLink:document.getElementById("macosDownloadLink"),windowsSummaryValue:document.getElementById("windowsSummaryValue"),windowsSummaryNote:document.getElementById("windowsSummaryNote"),macosSummaryValue:document.getElementById("macosSummaryValue"),macosSummaryNote:document.getElementById("macosSummaryNote"),windowsCardTitle:document.getElementById("windowsCardTitle"),windowsCardStatus:document.getElementById("windowsCardStatus"),windowsCardBody:document.getElementById("windowsCardBody"),windowsCardFacts:document.getElementById("windowsCardFacts"),windowsCardLink:document.getElementById("windowsCardLink"),macosCardTitle:document.getElementById("macosCardTitle"),macosCardStatus:document.getElementById("macosCardStatus"),macosCardBody:document.getElementById("macosCardBody"),macosCardFacts:document.getElementById("macosCardFacts"),macosCardLink:document.getElementById("macosCardLink"),releaseStatusPill:document.getElementById("releaseStatusPill"),releaseMetaTitle:document.getElementById("releaseMetaTitle"),releaseMetaBody:document.getElementById("releaseMetaBody")};
+      const t=k=>(TEXT[S.lang]&&TEXT[S.lang][k])||TEXT.zh[k]||k,fmt=(s,v)=>Object.entries(v).reduce((r,[k,val])=>r.replaceAll(`{${k}}`,val),s),fSize=v=>{const n=Number(v||0);if(!n)return"--";const u=["B","KB","MB","GB"];let s=n,i=0;while(s>=1024&&i<u.length-1){s/=1024;i++}const p=i===0?0:s>=100?0:s>=10?1:2;return`${s.toFixed(p)} ${u[i]}`},fDate=v=>{if(!v)return"--";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):new Intl.DateTimeFormat(S.lang==="en"?"en-US":"zh-CN",{year:"numeric",month:"2-digit",day:"2-digit"}).format(d)};
+      function applyText(){document.documentElement.lang=S.lang==="en"?"en-US":"zh-CN";document.title=S.lang==="en"?"Police Claw Download Console":"Police Claw 下载控制台";document.querySelector('meta[name="description"]').setAttribute("content",S.lang==="en"?"Download the Police Claw Windows and macOS clients and review the capability boundaries of the local scan and remediation workbench.":"下载 Police Claw 的 Windows 与 macOS 客户端，并查看本地扫描与处置工作台的能力边界。");N.languageSelect.value=S.lang;document.querySelectorAll("[data-text]").forEach(n=>n.textContent=t(n.dataset.text))}
+      function setPill(node,ok){node.className="pill "+(ok?"pill-ok":"pill-warn");node.textContent=ok?t("available"):t("pending")}
+      function setBtn(node,ok,label,fallback,href){node.textContent=label;node.href=ok?href:fallback;node.classList.toggle("button-disabled",!ok);node.setAttribute("aria-disabled",ok?"false":"true")}
+      function setFacts(node,m,minimum){if(!m){node.innerHTML=`<span class="chip">${t("fu")}</span>`;return}node.innerHTML=[fmt(t("fv"),{v:m.release_tag||m.version||"--"}),fmt(t("fs"),{v:fSize(m.installer_size_bytes)}),fmt(t("fo"),{v:m.minimum_os||minimum}),fmt(t("fp"),{v:fDate(m.published_at)})].map(v=>`<span class="chip">${v}</span>`).join("")}
+      function renderPlatform(kind,m){const ok=Boolean(m&&m.available&&m.download_url),refs=kind==="windows"?{title:N.windowsCardTitle,status:N.windowsCardStatus,body:N.windowsCardBody,facts:N.windowsCardFacts,action:N.windowsCardLink,main:N.windowsDownloadLink,fallback:"./download/windows/latest/",label:t("downloadWindows"),min:"Windows 10+"}:{title:N.macosCardTitle,status:N.macosCardStatus,body:N.macosCardBody,facts:N.macosCardFacts,action:N.macosCardLink,main:N.macosDownloadLink,fallback:"./download/macos/latest/",label:t("downloadMac"),min:"macOS 13+"};refs.title.textContent=ok?fmt(kind==="windows"?t("wTitle"):t("mTitle"),{v:m.release_tag||m.version||t("current")}):(kind==="windows"?t("wTitlePending"):t("mTitlePending"));refs.body.textContent=ok?(kind==="windows"?t("wBody"):t("mBody")):(kind==="windows"?t("wBodyPending"):t("mBodyPending"));setPill(refs.status,ok);setFacts(refs.facts,m,refs.min);setBtn(refs.action,ok,refs.label,refs.fallback,m&&m.download_url);setBtn(refs.main,ok,kind==="windows"?t("ctaWindows"):t("ctaMac"),refs.fallback,m&&m.download_url)}
+      function renderSummary(){const w=S.manifests.windows,m=S.manifests.macos,wOk=Boolean(w&&w.available),mOk=Boolean(m&&m.available);N.windowsSummaryValue.textContent=wOk?(w.release_tag||w.version||t("available")):t("pending");N.windowsSummaryNote.textContent=wOk?t("ready"):t("awaiting");N.macosSummaryValue.textContent=mOk?(m.release_tag||m.version||t("available")):t("pending");N.macosSummaryNote.textContent=mOk?t("ready"):t("awaiting");N.releaseStatusPill.className="pill "+(wOk&&mOk?"pill-ok":"pill-warn");N.releaseStatusPill.textContent=wOk&&mOk?t("published"):(wOk||mOk?t("partial"):t("checking"));N.releaseMetaTitle.textContent=t("metaTitle");N.releaseMetaBody.textContent=fmt(t("metaBody"),{w:wOk?(w.release_tag||w.version||t("available")):t("pending"),m:mOk?(m.release_tag||m.version||t("available")):t("pending")})}
+      async function load(u){const r=await fetch(u,{headers:{Accept:"application/json"}});if(!r.ok)throw new Error("manifest unavailable");return r.json()}
+      async function refresh(){const [w,m]=await Promise.allSettled([load(URLS.windows),load(URLS.macos)]);S.manifests.windows=w.status==="fulfilled"?w.value:null;S.manifests.macos=m.status==="fulfilled"?m.value:null;renderPlatform("windows",S.manifests.windows);renderPlatform("macos",S.manifests.macos);renderSummary()}
+      N.languageSelect.addEventListener("change",e=>{S.lang=e.target.value==="en"?"en":"zh";try{localStorage.setItem(KEY,S.lang)}catch(err){}applyText();renderPlatform("windows",S.manifests.windows);renderPlatform("macos",S.manifests.macos);renderSummary()});
+      applyText();renderSummary();refresh().catch(()=>renderSummary());
     })();
   </script>
 </body>

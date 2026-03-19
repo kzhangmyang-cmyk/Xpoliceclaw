@@ -385,10 +385,23 @@ const LANGUAGE_STORAGE_KEY = "policeClawLocale";
 const SUPPORTED_LANGUAGES = new Set(["zh", "en"]);
 const STATIC_TRANSLATIONS = {
   zh: {
-    "brand.subtitle": "安全报告工作台",
+    "brand.subtitle": "企业安全控制台",
+    "topbar.kicker": "企业安全控制台",
+    "topbar.subtitle": "面向 AI agents、skills、scripts 与本地执行风险的安全工作台",
+    "topbar.stateLabel": "当前状态",
+    "topbar.lastScanLabel": "最近扫描",
+    "topbar.modeDemo": "演示数据",
     "language.label": "语言",
     "topbar.download": "下载 Windows 客户端",
     "topbar.architecture": "查看架构",
+    "nav.eyebrow": "导航",
+    "nav.title": "控制台",
+    "nav.dashboard": "Dashboard",
+    "nav.findings": "Findings",
+    "nav.targets": "Targets",
+    "nav.history": "History",
+    "nav.scopeEyebrow": "边界",
+    "nav.scopeBody": "聚焦 AI agents、skills、scripts 与本地执行风险，不扩展为通用系统防护界面。",
     "hero.eyebrow": "处置工作台",
     "hero.title": "在一个工作台里完成检测、解释、卸载和复核。",
     "hero.description": "工作台保留了原始扫描与证据分析流程，并补上了真实卸载链路：识别可处置目标、查看处置范围、发起后台卸载，并在同一页完成残留复核。",
@@ -401,13 +414,13 @@ const STATIC_TRANSLATIONS = {
     "hero.highlight.audit.tag": "审计",
     "hero.highlight.audit.title": "JSON、DOCX、任务日志与残留",
     "section.summary.eyebrow": "管理摘要",
-    "section.summary.title": "管理层总览",
+    "section.summary.title": "执行概览",
     "summary.meta.host": "主机",
     "summary.meta.system": "系统",
     "summary.meta.scanId": "扫描 ID",
     "summary.meta.finishedAt": "完成时间",
     "recommendation.eyebrow": "下一步动作",
-    "recommendation.title": "建议动作",
+    "recommendation.title": "Recommended Remediation",
     "recommendation.targets.title": "高风险目标",
     "progress.eyebrow": "扫描生命周期",
     "progress.title": "执行进度",
@@ -416,8 +429,8 @@ const STATIC_TRANSLATIONS = {
     "findings.eyebrow": "发现项",
     "findings.title": "发现工作台",
     "findings.searchPlaceholder": "搜索检查项、域、描述或 ID",
-    "findings.head.check": "检查项",
-    "findings.head.domain": "安全域",
+    "findings.head.check": "发现项 / 目标",
+    "findings.head.domain": "类型 / 安全域",
     "findings.head.status": "状态",
     "findings.head.risk": "风险",
     "findings.head.confidence": "置信度",
@@ -465,10 +478,23 @@ const STATIC_TRANSLATIONS = {
     "modal.submit": "确认卸载",
   },
   en: {
-    "brand.subtitle": "Security Report Workbench",
+    "brand.subtitle": "Enterprise Security Console",
+    "topbar.kicker": "Enterprise Security Console",
+    "topbar.subtitle": "Local security workbench for AI agents, risky skills, scripts, and local execution risks",
+    "topbar.stateLabel": "System State",
+    "topbar.lastScanLabel": "Last Scan",
+    "topbar.modeDemo": "Demo Data",
     "language.label": "Language",
     "topbar.download": "Download Windows Client",
     "topbar.architecture": "View Architecture",
+    "nav.eyebrow": "Navigation",
+    "nav.title": "Control Surface",
+    "nav.dashboard": "Dashboard",
+    "nav.findings": "Findings",
+    "nav.targets": "Targets",
+    "nav.history": "History",
+    "nav.scopeEyebrow": "Scope",
+    "nav.scopeBody": "Focused on AI agents, skills, scripts, and local execution risks rather than general system protection.",
     "hero.eyebrow": "Operational Reporting",
     "hero.title": "Detect, explain, remove, and verify in one workbench.",
     "hero.description": "The workbench keeps the original scan and evidence workflow, and adds a real uninstall track: identify removable targets, inspect scope, launch a background uninstall, and review residuals without leaving the report page.",
@@ -481,13 +507,13 @@ const STATIC_TRANSLATIONS = {
     "hero.highlight.audit.tag": "Audit",
     "hero.highlight.audit.title": "JSON, DOCX, task logs, leftovers",
     "section.summary.eyebrow": "Executive Summary",
-    "section.summary.title": "Management Summary",
+    "section.summary.title": "Executive Summary",
     "summary.meta.host": "Host",
     "summary.meta.system": "System",
     "summary.meta.scanId": "Scan ID",
     "summary.meta.finishedAt": "Finished At",
     "recommendation.eyebrow": "Next Moves",
-    "recommendation.title": "Recommended Actions",
+    "recommendation.title": "Recommended Remediation",
     "recommendation.targets.title": "High-Risk Targets",
     "progress.eyebrow": "Scan Lifecycle",
     "progress.title": "Execution Progress",
@@ -496,8 +522,8 @@ const STATIC_TRANSLATIONS = {
     "findings.eyebrow": "Findings",
     "findings.title": "Finding Workbench",
     "findings.searchPlaceholder": "Search checks, domains, descriptions, or IDs",
-    "findings.head.check": "Check",
-    "findings.head.domain": "Domain",
+    "findings.head.check": "Finding / Target",
+    "findings.head.domain": "Type / Domain",
     "findings.head.status": "Status",
     "findings.head.risk": "Risk",
     "findings.head.confidence": "Confidence",
@@ -561,6 +587,7 @@ const HIGH_RISK_THRESHOLD = 70;
 const TASK_ACTIVE_STATUSES = new Set(["pending", "running"]);
 const TASK_TERMINAL_STATUSES = new Set(["success", "failed", "partial"]);
 const MANUAL_REVIEW_BLOCK_CODES = new Set(["path_too_broad", "user_data_overlap", "binary_not_safe_to_remove"]);
+const CONSOLE_SECTION_IDS = ["dashboardSection", "findingsSection", "targetsSection", "historySection"];
 const state = {
   language: resolvePreferredLanguage(),
   jobs: [],
@@ -934,6 +961,7 @@ function setLanguage(language) {
   }
   document.documentElement.lang = getLanguageLocale();
   applyStaticTranslations();
+  ensureConsoleChrome();
   applyFilterSelectCopy();
   rerenderLanguageState();
 }
@@ -957,6 +985,137 @@ function applyStaticTranslations() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
     node.setAttribute("placeholder", translateStaticKey(node.dataset.i18nPlaceholder));
   });
+}
+
+function ensureConsoleChrome() {
+  ensureScopeBadgeHost();
+  ensureTopbarFactsHost();
+  ensureFindingsSummaryHost();
+  ensureOperationSignalHost();
+  ensurePanelSubcopy("#dashboardSection", tr(
+    "用一眼可读的方式汇总当前风险态势、主机上下文与最近一次扫描结果。",
+    "Summarize current posture, host context, and the latest completed scan in one pass.",
+  ));
+  ensurePanelSubcopy(".progress-panel", tr(
+    "跟踪当前扫描阶段、阶段历史和最终报告生成进度。",
+    "Track the current stage, stage history, and report generation progress for the active scan.",
+  ));
+  ensurePanelSubcopy("#domainPortfolio", tr(
+    "按安全域查看风险分布，快速定位最值得先处理的本地执行面。",
+    "Compare risk distribution across domains to find the most urgent local execution surface.",
+  ));
+  ensurePanelSubcopy(".runtime-panel-main", tr(
+    "保留进程、连接、文件与模型信号，帮助解释报告与处置范围。",
+    "Keep process, connection, file, and model signals visible so findings stay explainable.",
+  ));
+  ensurePanelSubcopy("#findingsSection", tr(
+    "以表格方式浏览高风险代理、脚本、技能与本地执行迹象，并联动证据检查器。",
+    "Review risky agents, scripts, skills, and local execution traces in a table-first workflow.",
+  ));
+  ensurePanelSubcopy("#targetsSection", tr(
+    "优先列出处置价值最高且范围可解释的自动化或人工跟进动作。",
+    "Queue the highest-value remediation moves first and leave explicit manual follow-up signals.",
+  ));
+  ensurePanelSubcopy("#operationsSection", tr(
+    "集中查看当前扫描状态、最近处置结果与报告导出入口。",
+    "Keep scan status, recent remediation outcome, and report exports in one operational rail.",
+  ));
+  ensurePanelSubcopy("#uninstallTaskMeta", tr(
+    "持续显示后台处置任务的步骤、进度和日志输出。",
+    "Follow each remediation task through background steps, timing, and logs.",
+  ));
+  ensurePanelSubcopy("#evidenceMeta", tr(
+    "查看原始证据、推导目标与当前发现项的上下文说明。",
+    "Inspect raw evidence, inferred targets, and the reasoning behind the selected finding.",
+  ));
+  ensurePanelSubcopy("#uninstallResultMeta", tr(
+    "汇总已删除、保留与残留项，明确哪些步骤仍需人工复核。",
+    "Review removed, preserved, and leftover items before closing the remediation loop.",
+  ));
+  ensurePanelSubcopy("#safetyNotesMeta", tr(
+    "明确当前控制台的能力边界、保守处置原则与历史持久化范围。",
+    "Reinforce capability scope, conservative deletion boundaries, and persisted history behavior.",
+  ));
+  ensurePanelSubcopy("#historyList", tr(
+    "回看最近的扫描批次、状态与报告完成情况。",
+    "Review recent scan batches, completion state, and the latest host snapshot.",
+  ));
+  ensurePanelSubcopy("#uninstallHistoryList", tr(
+    "追踪最近的自动处置尝试、结果和人工跟进信号。",
+    "Track the latest automated remediation attempts and remaining manual review work.",
+  ));
+  ensurePanelSubcopy("#downloadPanelMeta", tr(
+    "本地客户端负责真实扫描与处置，网站只负责分发安装包。",
+    "The local client performs real scan and remediation. The site only distributes installers.",
+  ));
+}
+
+function ensureTopbarFactsHost() {
+  const topbarCopy = document.querySelector(".topbar-copy");
+  if (!topbarCopy || document.getElementById("consoleQuickStats")) {
+    return;
+  }
+  const host = document.createElement("div");
+  host.id = "consoleQuickStats";
+  host.className = "topbar-facts";
+  topbarCopy.appendChild(host);
+}
+
+function ensureScopeBadgeHost() {
+  const subtitle = document.querySelector(".topbar-subtitle");
+  if (!subtitle || document.getElementById("scopeBadgeHost")) {
+    return;
+  }
+  const host = document.createElement("div");
+  host.id = "scopeBadgeHost";
+  host.className = "scope-badge";
+  subtitle.insertAdjacentElement("afterend", host);
+}
+
+function ensureFindingsSummaryHost() {
+  const findingsSection = document.getElementById("findingsSection");
+  if (!findingsSection || document.getElementById("findingsSummaryChips")) {
+    return;
+  }
+  const toolbar = findingsSection.querySelector(".findings-toolbar");
+  if (!toolbar) {
+    return;
+  }
+  const host = document.createElement("div");
+  host.id = "findingsSummaryChips";
+  host.className = "findings-summary";
+  toolbar.insertAdjacentElement("afterend", host);
+}
+
+function ensureOperationSignalHost() {
+  const section = document.getElementById("operationsSection");
+  if (!section || document.getElementById("opsSignalStrip")) {
+    return;
+  }
+  const statusCard = section.querySelector(".status-card");
+  if (!statusCard) {
+    return;
+  }
+  const host = document.createElement("div");
+  host.id = "opsSignalStrip";
+  host.className = "ops-signal-strip";
+  statusCard.insertAdjacentElement("beforebegin", host);
+}
+
+function ensurePanelSubcopy(anchorSelector, text) {
+  const anchor = document.querySelector(anchorSelector);
+  const section = anchor?.matches("section") ? anchor : anchor?.closest("section");
+  const container = section?.querySelector(".panel-head > div");
+  if (!container) {
+    return;
+  }
+  let node = container.querySelector(".panel-subcopy");
+  if (!node) {
+    node = document.createElement("p");
+    node.className = "panel-subcopy";
+    container.appendChild(node);
+  }
+  node.textContent = text;
 }
 
 function applyFilterSelectCopy() {
@@ -1049,11 +1208,42 @@ function bindEvents() {
   document.getElementById("removeConfigToggle").addEventListener("change", onModalInputChange);
   document.getElementById("removeBinaryToggle").addEventListener("change", onModalInputChange);
   document.getElementById("confirmationText").addEventListener("input", onModalInputChange);
+  document.querySelectorAll(".console-nav-link").forEach((link) => {
+    link.addEventListener("click", onConsoleNavClick);
+  });
+  window.addEventListener("hashchange", () => setActiveConsoleNav(resolveConsoleNavSection()));
+  bindConsoleNavigation();
+}
+
+function onConsoleNavClick(event) {
+  const href = event.currentTarget.getAttribute("href") || "";
+  if (!href.startsWith("#")) {
+    return;
+  }
+  setActiveConsoleNav(href.slice(1));
+}
+
+function setActiveConsoleNav(sectionId) {
+  document.querySelectorAll(".console-nav-link").forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    const targetId = href.startsWith("#") ? href.slice(1) : "";
+    link.classList.toggle("is-active", targetId === sectionId);
+  });
+}
+
+function bindConsoleNavigation() {
+  setActiveConsoleNav(resolveConsoleNavSection());
+}
+
+function resolveConsoleNavSection() {
+  const hash = String(window.location.hash || "").replace(/^#/, "");
+  return CONSOLE_SECTION_IDS.includes(hash) ? hash : "dashboardSection";
 }
 
 async function bootstrap() {
   document.documentElement.lang = getLanguageLocale();
   applyStaticTranslations();
+  ensureConsoleChrome();
   applyFilterSelectCopy();
   renderEmptyState();
   renderGlobalNotice();
@@ -1305,6 +1495,7 @@ function stopUninstallPolling() {
 }
 
 function renderJob(job) {
+  renderConsoleHeader(job);
   syncButtonState();
   syncOperationPanel(job);
   renderExecutiveSummary(job);
@@ -1320,6 +1511,7 @@ function renderJob(job) {
   renderUninstallResult();
   renderUninstallHistory();
   renderDownloadPanel();
+  decorateConsoleSurface(job);
 }
 
 function refreshUninstallViews() {
@@ -1333,6 +1525,7 @@ function refreshUninstallViews() {
   renderUninstallHistory();
   renderDownloadPanel();
   renderModal();
+  decorateConsoleSurface(state.currentJob);
 }
 
 function syncOperationPanel(job) {
@@ -1385,6 +1578,56 @@ function syncOperationPanel(job) {
       : tr("还没有执行过卸载任务", "No uninstall task has run yet");
 }
 
+function renderConsoleHeader(job) {
+  const stateBadge = document.getElementById("consoleStateBadge");
+  const lastScan = document.getElementById("consoleLastScanText");
+  const demoBadge = document.getElementById("consoleModeBadge");
+  if (!stateBadge || !lastScan || !demoBadge) {
+    return;
+  }
+
+  if (PUBLIC_SITE_MODE) {
+    stateBadge.className = `console-status-badge ${hasDownloadAsset() ? "state-safe" : "state-review"}`;
+    stateBadge.textContent = hasDownloadAsset()
+      ? tr("站点交付", "Hosted Delivery")
+      : tr("待发布", "Release Pending");
+    lastScan.textContent = DOWNLOAD_ASSET.publishedAt ? formatDate(DOWNLOAD_ASSET.publishedAt) : (DOWNLOAD_ASSET.version || "--");
+    demoBadge.className = "console-mode-badge is-hidden";
+    demoBadge.textContent = tr("演示数据", "Demo Data");
+    return;
+  }
+
+  const referenceJob = job || state.jobs.find((item) => item?.report) || state.jobs[0] || null;
+  let label = tr("等待扫描", "Idle");
+  let tone = "state-idle";
+  let lastText = "--";
+
+  if (referenceJob) {
+    lastText = referenceJob.report?.timestamp || formatDate(referenceJob.updated_at || referenceJob.finished_at || referenceJob.created_at) || "--";
+    if (["queued", "running"].includes(referenceJob.status)) {
+      label = getStageLabel(referenceJob.stage_key, referenceJob.stage_label) || tr("处理中", "Reviewing");
+      tone = "state-review";
+    } else if (referenceJob.status === "failed") {
+      label = tr("需要复核", "Review Required");
+      tone = "state-risk";
+    } else if (referenceJob.report) {
+      const posture = getPosture(referenceJob.report);
+      label = posture.label;
+      tone = posture.badgeClass === "badge-good"
+        ? "state-safe"
+        : posture.badgeClass === "badge-risk"
+          ? "state-risk"
+          : "state-review";
+    }
+  }
+
+  stateBadge.className = `console-status-badge ${tone}`;
+  stateBadge.textContent = label;
+  lastScan.textContent = lastText;
+  demoBadge.className = referenceJob?.report?.demo_mode ? "console-mode-badge" : "console-mode-badge is-hidden";
+  demoBadge.textContent = tr("演示数据", "Demo Data");
+}
+
 function renderExecutiveSummary(job) {
   const report = job?.report;
   const badge = document.getElementById("reportBadge");
@@ -1413,7 +1656,6 @@ function renderExecutiveSummary(job) {
       { value: hasDownloadAsset() ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--", label: tr("安装包大小", "Package Size") },
       { value: tr("本地", "Local"), label: tr("执行范围", "Execution Scope") },
       { value: tr("保守", "Conservative"), label: tr("删除边界", "Removal Boundary") },
-      { value: tr("持久化", "Persisted"), label: tr("历史恢复", "History Recovery") },
     ].map((card) => `
       <article class="summary-card">
         <span>${escapeHtml(card.label)}</span>
@@ -1489,12 +1731,17 @@ function renderExecutiveSummary(job) {
     const remediation = getRemediationStateForTarget(target);
     return remediation.status === "partial" || remediation.status === "manual-review";
   });
+  const checks = report.checks || [];
+  const highRiskCount = checks.filter((check) => Number(check.risk_score || 0) >= HIGH_RISK_THRESHOLD).length;
+  const mediumRiskCount = checks.filter((check) => {
+    const score = Number(check.risk_score || 0);
+    return score >= 40 && score < HIGH_RISK_THRESHOLD;
+  }).length;
   const summaryCards = [
-    { value: report.summary.total_risks, label: tr("风险发现", "Risk Findings") },
-    { value: report.summary.max_risk_score, label: tr("最高风险分", "Max Risk Score") },
-    { value: report.runtime?.result_overview?.active_signals ?? "--", label: tr("活动信号", "Active Signals") },
-    { value: `${resolvedTargets.length}/${supportedTargets.length}`, label: tr("自动处置完成", "Auto-Remediated") },
-    { value: manualReviewTargets.length, label: tr("残留复核", "Residual Review") },
+    { value: highRiskCount, label: tr("高风险", "High Risk") },
+    { value: mediumRiskCount, label: tr("中风险", "Medium Risk") },
+    { value: resolvedTargets.length, label: tr("已处置", "Resolved") },
+    { value: manualReviewTargets.length, label: tr("人工复核", "Manual Review") },
   ];
 
   summaryGrid.innerHTML = summaryCards.map((card) => `
@@ -1754,7 +2001,10 @@ function renderSafetyNotes(job) {
 function renderHistory() {
   const container = document.getElementById("historyList");
   if (!state.jobs.length) {
-    container.innerHTML = buildEmptyCard(tr("还没有扫描历史。", "No scan history yet."));
+    container.innerHTML = buildEmptyCard(
+      tr("还没有扫描历史。", "No scan history yet."),
+      tr("等待首个扫描批次", "Awaiting first scan batch"),
+    );
     return;
   }
 
@@ -1784,7 +2034,10 @@ function renderHistory() {
 function renderUninstallHistory() {
   const container = document.getElementById("uninstallHistoryList");
   if (!state.uninstallHistory.length) {
-    container.innerHTML = buildEmptyCard(tr("还没有发起过卸载任务。", "No uninstall tasks have been started yet."));
+    container.innerHTML = buildEmptyCard(
+      tr("还没有发起过卸载任务。", "No uninstall tasks have been started yet."),
+      tr("等待处置任务", "Awaiting remediation task"),
+    );
     return;
   }
 
@@ -1854,19 +2107,32 @@ function renderDomainPortfolio(job) {
 function renderFindings(job) {
   const table = document.getElementById("findingsTable");
   const meta = document.getElementById("findingsMeta");
+  const summary = document.getElementById("findingsSummaryChips");
   const report = job?.report;
   if (!report) {
-    table.innerHTML = buildEmptyCard(tr("扫描报告准备完成后，这里会显示发现项。", "Findings will populate after the scan report is ready."));
+    if (summary) {
+      renderFindingsSummary([], 0);
+    }
+    table.innerHTML = buildEmptyCard(
+      tr("扫描报告准备完成后，这里会显示发现项。", "Findings will populate after the scan report is ready."),
+      tr("等待发现项数据集", "Awaiting findings dataset"),
+    );
     meta.textContent = tr("0 条记录", "0 records");
     return;
   }
 
   const checks = applyFindingFilters(report.checks || []);
   meta.textContent = tr(`${checks.length} 条可见 / 共 ${(report.checks || []).length} 条`, `${checks.length} visible / ${(report.checks || []).length} total`);
+  if (summary) {
+    renderFindingsSummary(checks, (report.checks || []).length);
+  }
 
   if (!checks.length) {
     state.selectedCheckId = null;
-    table.innerHTML = buildEmptyCard(tr("当前筛选条件下没有匹配的发现项。", "No findings match the current filter set."));
+    table.innerHTML = buildEmptyCard(
+      tr("当前筛选条件下没有匹配的发现项。", "No findings match the current filter set."),
+      tr("筛选后无结果", "No matching findings"),
+    );
     return;
   }
 
@@ -1880,31 +2146,45 @@ function renderFindings(job) {
     const primaryTarget = pickPrimaryTarget(relatedTargets);
     const remediation = markRelatedFindingsHandled(check.id);
     const resolved = remediation.status === "removed" || remediation.status === "mitigated";
-    const riskStatus = isFlagged(check) ? "status-risk" : "status-clear";
-    const riskLabel = isFlagged(check) ? tr("风险", "Risk") : tr("清洁", "Clear");
+    const targetLabel = primaryTarget ? getTargetName(primaryTarget) : tr("未推导出可处置目标", "No removable target inferred");
+    const typeLabel = primaryTarget ? getTargetTypeLabel(primaryTarget.target_type || primaryTarget.type) : tr("待定目标类型", "Pending target type");
+    const severity = getFindingRiskProfile(check);
+    const workflow = getFindingWorkflowProfile(check, remediation);
     const width = Math.max(2, Number(check.risk_score || 0));
+    const evidenceCount = String(check.evidence_count || 0);
 
     return `
       <button class="finding-row ${selected} ${resolved ? "is-resolved" : ""}" type="button" data-check-id="${check.id}">
         <div class="finding-row-grid">
-          <div>
-            <div class="finding-title">${escapeHtml(displayCheckTitle(check))}</div>
+          <div class="finding-primary">
+            <div class="finding-title-row">
+              <div class="finding-title">${escapeHtml(displayCheckTitle(check))}</div>
+              <span class="finding-id">${escapeHtml(check.id)}</span>
+            </div>
             <div class="finding-support">${escapeHtml(displayCheckDescription(check))}</div>
+            <div class="finding-secondary">${escapeHtml(targetLabel)}</div>
           </div>
-          <div class="finding-domain">
-            <span>${escapeHtml(check.domain_icon || "")}</span>
+          <div class="finding-type-cell">
+            <strong>${escapeHtml(typeLabel)}</strong>
             <span>${escapeHtml(getCheckDomainLabel(check))}</span>
           </div>
-          <div>
-            <span class="finding-status ${riskStatus}">${escapeHtml(riskLabel)}</span>
-            ${remediation.label ? `<span class="finding-tag finding-tag-${escapeHtml(remediation.status)}">${escapeHtml(remediation.label)}</span>` : ""}
+          <div class="finding-status-cell">
+            <span class="workflow-badge ${escapeHtml(workflow.className)}">${escapeHtml(workflow.label)}</span>
+            ${workflow.detail ? `<span class="finding-status-note">${escapeHtml(workflow.detail)}</span>` : ""}
           </div>
-          <div class="finding-risk">
+          <div class="finding-risk-cell">
+            <span class="risk-pill ${escapeHtml(severity.className)}">${escapeHtml(severity.label)}</span>
             <strong>${escapeHtml(String(check.risk_score))}</strong>
             <div class="mini-meter"><span style="width:${width}%"></span></div>
           </div>
-          <div>${escapeHtml(formatPercent(check.confidence))}</div>
-          <div>${escapeHtml(String(check.evidence_count || 0))}</div>
+          <div class="finding-metric-cell">
+            <strong>${escapeHtml(formatPercent(check.confidence))}</strong>
+            <span>${escapeHtml(tr("置信度", "Confidence"))}</span>
+          </div>
+          <div class="finding-metric-cell">
+            <strong>${escapeHtml(evidenceCount)}</strong>
+            <span>${escapeHtml(tr("证据样本", "Evidence"))}</span>
+          </div>
           <div class="finding-actions">
             ${renderFindingAction(primaryTarget, remediation)}
           </div>
@@ -1946,6 +2226,60 @@ function renderFindingAction(target, remediation) {
     <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("查看范围", "View Scope"))}</button>
     <button class="action-btn danger" type="button" data-uninstall-action="launch" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("一键卸载", "Uninstall"))}</button>
   `;
+}
+
+function getFindingRiskProfile(check) {
+  const score = Number(check?.risk_score || 0);
+  if (score >= HIGH_RISK_THRESHOLD) {
+    return { label: tr("高", "High"), className: "risk-high" };
+  }
+  if (score >= 40) {
+    return { label: tr("中", "Medium"), className: "risk-medium" };
+  }
+  return { label: tr("低", "Low"), className: "risk-low" };
+}
+
+function getFindingWorkflowProfile(check, remediation) {
+  if (remediation.status === "removed" || remediation.status === "mitigated") {
+    return {
+      label: remediation.label || tr("已处理", "Handled"),
+      className: "workflow-closed",
+      detail: "",
+    };
+  }
+  if (remediation.status === "partial") {
+    return {
+      label: remediation.label || tr("部分完成", "Partial"),
+      className: "workflow-partial",
+      detail: tr("仍需人工复核残留项", "Residual review is still required"),
+    };
+  }
+  if (remediation.status === "manual-review") {
+    return {
+      label: remediation.label || tr("人工复核", "Manual Review"),
+      className: "workflow-manual",
+      detail: remediation.detail || tr("证据不足以执行自动文件删除", "Evidence is not precise enough for automatic file removal"),
+    };
+  }
+  if (remediation.status === "running") {
+    return {
+      label: remediation.label || tr("进行中", "In Progress"),
+      className: "workflow-running",
+      detail: tr("后台任务正在执行处置步骤", "A background task is currently executing remediation steps"),
+    };
+  }
+  if (!isFlagged(check)) {
+    return {
+      label: tr("已审阅", "Reviewed"),
+      className: "workflow-reviewed",
+      detail: tr("当前发现项没有形成高风险处置请求", "This finding does not currently require high-priority remediation"),
+    };
+  }
+  return {
+    label: tr("待处理", "Open"),
+    className: "workflow-open",
+    detail: tr("建议结合证据与目标范围继续处置", "Review the evidence and inferred target scope before taking action"),
+  };
 }
 
 function renderEvidencePanel(job) {
@@ -2202,6 +2536,7 @@ function syncButtonState() {
 }
 
 function renderEmptyState() {
+  renderConsoleHeader(null);
   syncButtonState();
   syncOperationPanel(null);
   renderExecutiveSummary(null);
@@ -2221,6 +2556,7 @@ function renderEmptyState() {
 }
 
 function renderPublicSiteMode() {
+  renderConsoleHeader(null);
   document.title = hasDownloadAsset()
     ? tr("Police Claw Windows 客户端下载", "Police Claw Windows Client Download")
     : tr("Police Claw 发布包待就绪", "Police Claw Release Package Pending");
@@ -2233,6 +2569,7 @@ function renderPublicSiteMode() {
   );
   renderExecutiveSummary(null);
   renderDownloadPanel();
+  decorateConsoleSurface(null);
 }
 
 function renderGlobalNotice() {
@@ -3159,8 +3496,235 @@ function formatDate(value) {
   }).format(date);
 }
 
-function buildEmptyCard(text) {
-  return `<div class="empty-card">${escapeHtml(text)}</div>`;
+function buildEmptyCard(text, title = tr("等待信号", "Awaiting signal")) {
+  return `
+    <div class="empty-card">
+      <span class="empty-card-kicker">${escapeHtml(tr("控制台状态", "Console state"))}</span>
+      <strong class="empty-card-title">${escapeHtml(title)}</strong>
+      <p class="empty-card-body">${escapeHtml(text)}</p>
+    </div>
+  `;
+}
+
+function renderConsoleHeader(job) {
+  const stateBadge = document.getElementById("consoleStateBadge");
+  const lastScan = document.getElementById("consoleLastScanText");
+  const demoBadge = document.getElementById("consoleModeBadge");
+  if (!stateBadge || !lastScan || !demoBadge) {
+    return;
+  }
+
+  if (PUBLIC_SITE_MODE) {
+    stateBadge.className = `console-status-badge ${hasDownloadAsset() ? "state-safe" : "state-review"}`;
+    stateBadge.textContent = hasDownloadAsset()
+      ? tr("站点交付", "Hosted Delivery")
+      : tr("待发布", "Release Pending");
+    lastScan.textContent = DOWNLOAD_ASSET.publishedAt ? formatDate(DOWNLOAD_ASSET.publishedAt) : (DOWNLOAD_ASSET.version || "--");
+    demoBadge.className = "console-mode-badge is-hidden";
+    demoBadge.textContent = tr("演示数据", "Demo Data");
+    renderConsoleQuickStats(null);
+    return;
+  }
+
+  const referenceJob = job || state.jobs.find((item) => item?.report) || state.jobs[0] || null;
+  let label = tr("等待扫描", "Idle");
+  let tone = "state-idle";
+  let lastText = "--";
+
+  if (referenceJob) {
+    lastText = referenceJob.report?.timestamp || formatDate(referenceJob.updated_at || referenceJob.finished_at || referenceJob.created_at) || "--";
+    if (["queued", "running"].includes(referenceJob.status)) {
+      label = getStageLabel(referenceJob.stage_key, referenceJob.stage_label) || tr("处理中", "Reviewing");
+      tone = "state-review";
+    } else if (referenceJob.status === "failed") {
+      label = tr("需要复核", "Review Required");
+      tone = "state-risk";
+    } else if (referenceJob.report) {
+      const posture = getPosture(referenceJob.report);
+      label = posture.label;
+      tone = posture.badgeClass === "badge-good"
+        ? "state-safe"
+        : posture.badgeClass === "badge-risk"
+          ? "state-risk"
+          : "state-review";
+    }
+  }
+
+  stateBadge.className = `console-status-badge ${tone}`;
+  stateBadge.textContent = label;
+  lastScan.textContent = lastText;
+  demoBadge.className = referenceJob?.report?.demo_mode ? "console-mode-badge" : "console-mode-badge is-hidden";
+  demoBadge.textContent = tr("演示数据", "Demo Data");
+  renderConsoleQuickStats(referenceJob);
+}
+
+function renderConsoleQuickStats(job) {
+  const host = document.getElementById("consoleQuickStats");
+  if (!host) {
+    return;
+  }
+
+  if (PUBLIC_SITE_MODE) {
+    const version = safeText(DOWNLOAD_ASSET.version, "--");
+    const size = DOWNLOAD_ASSET.sizeBytes ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--";
+    host.innerHTML = [
+      buildConsoleFact(tr("发布版本", "Release"), version, "safe"),
+      buildConsoleFact(tr("安装包", "Installer"), size, "neutral"),
+      buildConsoleFact(tr("通道", "Channel"), tr("稳定版", "Stable"), "review"),
+    ].join("");
+    return;
+  }
+
+  const report = job?.report || null;
+  if (!report) {
+    host.innerHTML = [
+      buildConsoleFact(tr("高风险", "High Risk"), "--", "risk"),
+      buildConsoleFact(tr("自动处置", "Auto Remediation"), "--", "neutral"),
+      buildConsoleFact(tr("人工复核", "Manual Review"), "--", "review"),
+    ].join("");
+    return;
+  }
+
+  const checks = report.checks || [];
+  const visibleTargets = getRenderableUninstallTargets();
+  const autoTargets = visibleTargets.filter((target) => target.uninstall_supported && target.support_level !== "terminate_only");
+  const manualQueue = visibleTargets.filter((target) => {
+    const remediation = getRemediationStateForTarget(target);
+    return remediation.status === "manual-review" || remediation.status === "partial";
+  });
+
+  host.innerHTML = [
+    buildConsoleFact(tr("高风险", "High Risk"), String(checks.filter((check) => Number(check?.risk_score || 0) >= HIGH_RISK_THRESHOLD).length), "risk"),
+    buildConsoleFact(tr("自动处置", "Auto Remediation"), String(autoTargets.length), autoTargets.length ? "safe" : "neutral"),
+    buildConsoleFact(tr("人工复核", "Manual Review"), String(manualQueue.length), manualQueue.length ? "review" : "neutral"),
+  ].join("");
+}
+
+function buildConsoleFact(label, value, tone = "neutral") {
+  return `
+    <article class="console-fact console-fact-${escapeHtml(tone)}">
+      <span class="console-fact-label">${escapeHtml(label)}</span>
+      <strong class="console-fact-value">${escapeHtml(value)}</strong>
+    </article>
+  `;
+}
+
+function renderFindingsSummary(checks, totalChecks = checks.length) {
+  const host = document.getElementById("findingsSummaryChips");
+  if (!host) {
+    return;
+  }
+
+  const manualQueue = checks.filter((check) => {
+    const remediation = markRelatedFindingsHandled(check.id);
+    return remediation.status === "manual-review" || remediation.status === "partial";
+  }).length;
+
+  host.innerHTML = [
+    buildFindingsSummaryChip(tr("可见记录", "Visible"), `${checks.length}/${totalChecks}`, "neutral"),
+    buildFindingsSummaryChip(tr("高风险", "High Risk"), String(checks.filter((check) => Number(check?.risk_score || 0) >= HIGH_RISK_THRESHOLD).length), "risk"),
+    buildFindingsSummaryChip(tr("人工复核", "Manual Review"), String(manualQueue), manualQueue ? "review" : "neutral"),
+  ].join("");
+}
+
+function buildFindingsSummaryChip(label, value, tone = "neutral") {
+  return `
+    <article class="findings-summary-chip findings-summary-${escapeHtml(tone)}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </article>
+  `;
+}
+
+function syncOperationPanel(job) {
+  if (PUBLIC_SITE_MODE) {
+    document.getElementById("jobStateText").textContent = hasDownloadAsset()
+      ? tr("公开下载站", "Public download site")
+      : tr("发布包不可用", "Release package unavailable");
+    document.getElementById("jobMetaText").textContent = hasDownloadAsset()
+      ? tr(`Windows 安装包 ${DOWNLOAD_ASSET.version || "--"} 已可直接下载。`, `Windows installer ${DOWNLOAD_ASSET.version || "--"} is ready for direct download.`)
+      : tr("请先构建 Windows 发布包，网站才会开放直接下载。", "Build a Windows release package to enable direct website downloads.");
+    document.getElementById("scanIdLabel").textContent = DOWNLOAD_ASSET.version || "--";
+    document.getElementById("scanTimeLabel").textContent = hasDownloadAsset()
+      ? formatFileSize(DOWNLOAD_ASSET.sizeBytes)
+      : "--";
+    document.getElementById("uninstallAvailableLabel").textContent = "--";
+    document.getElementById("uninstallLastStatus").textContent = tr("仅本地", "Local Only");
+    document.getElementById("uninstallLastMeta").textContent = tr(
+      "真实扫描与卸载只在安装后的 Windows 客户端中可用。",
+      "Real scan and uninstall remain available after the Windows client is installed.",
+    );
+    renderOperationSignals(null);
+    return;
+  }
+
+  const stageText = getStageLabel(job?.stage_key, job?.stage_label);
+  const statusText = job?.status === "failed"
+    ? tr("扫描失败", "Scan failed")
+    : stageText || tr("等待扫描", "Waiting for a scan");
+  const metaText = job?.report
+    ? `${job.report.host || "--"} / ${job.report.os || "--"}`
+    : job?.created_at
+      ? tr(`任务创建于 ${formatDate(job.created_at)}`, `Job created at ${formatDate(job.created_at)}`)
+      : tr("当前还没有活动中的扫描任务", "No active scan job yet");
+
+  document.getElementById("jobStateText").textContent = statusText;
+  document.getElementById("jobMetaText").textContent = metaText;
+  document.getElementById("scanIdLabel").textContent = job?.scan_id || "--";
+  document.getElementById("scanTimeLabel").textContent = job?.report?.timestamp || "--";
+
+  const scopedTargets = getRenderableUninstallTargets(job);
+  const directTargets = scopedTargets.filter((target) => target.uninstall_supported && target.support_level !== "terminate_only");
+  document.getElementById("uninstallAvailableLabel").textContent = String(directTargets.length);
+
+  const scopedHistory = getScopedUninstallHistory(job);
+  const lastTask = scopedHistory[0] || state.uninstallHistory[0];
+  document.getElementById("uninstallLastStatus").textContent = lastTask
+    ? getTaskStatusLabel(lastTask.status)
+    : tr("无", "None");
+  document.getElementById("uninstallLastMeta").textContent = lastTask
+    ? `${lastTask.target_name} / ${formatDate(lastTask.updated_at)}${lastTask.status === "partial" ? tr(" / 需要人工复核", " / Manual review required") : ""}`
+    : state.uninstallSourceScanId
+      ? tr(`目标来源于扫描 ${state.uninstallSourceScanId}`, `Targets sourced from scan ${state.uninstallSourceScanId}`)
+      : tr("还没有执行过卸载任务", "No uninstall task has run yet");
+  renderOperationSignals(job);
+}
+
+function renderOperationSignals(job) {
+  const host = document.getElementById("opsSignalStrip");
+  if (!host) {
+    return;
+  }
+
+  if (PUBLIC_SITE_MODE) {
+    host.innerHTML = [
+      buildOperationSignal(tr("分发模式", "Delivery"), tr("公网", "Hosted"), "neutral"),
+      buildOperationSignal(tr("平台", "Platform"), "Windows", "neutral"),
+      buildOperationSignal(tr("执行位置", "Execution"), tr("本地", "Local"), "review"),
+    ].join("");
+    return;
+  }
+
+  const report = job?.report || null;
+  const directTargets = getRenderableUninstallTargets(job).filter((target) => target.uninstall_supported && target.support_level !== "terminate_only");
+  const scopedHistory = getScopedUninstallHistory(job);
+  const lastTask = scopedHistory[0] || state.uninstallHistory[0] || null;
+  const openFindings = report ? (report.checks || []).filter((check) => isFlagged(check)).length : null;
+
+  host.innerHTML = [
+    buildOperationSignal(tr("开放风险", "Open Findings"), openFindings === null ? "--" : String(openFindings), openFindings ? "risk" : "neutral"),
+    buildOperationSignal(tr("直接处置", "Direct Targets"), String(directTargets.length), directTargets.length ? "safe" : "neutral"),
+    buildOperationSignal(tr("最近任务", "Last Task"), lastTask ? getTaskStatusLabel(lastTask.status) : tr("无", "None"), lastTask?.status === "partial" ? "review" : lastTask ? "safe" : "neutral"),
+  ].join("");
+}
+
+function buildOperationSignal(label, value, tone = "neutral") {
+  return `
+    <article class="ops-signal ops-signal-${escapeHtml(tone)}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </article>
+  `;
 }
 
 function getReleaseDisplayState() {
@@ -3360,4 +3924,188 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function decorateConsoleSurface(job) {
+  renderScopeBadge(job);
+  decorateFindingsTable(job);
+  decorateTargetRail(job);
+  renderActionQueueSummary(job);
+}
+
+function renderScopeBadge(job) {
+  const host = document.getElementById("scopeBadgeHost");
+  if (!host) {
+    return;
+  }
+  const hosted = PUBLIC_SITE_MODE;
+  const demo = Boolean(job?.report?.demo_mode || job?.demo_mode || job?.source_type === "demo");
+  host.className = `scope-badge ${hosted ? "scope-badge-hosted" : demo ? "scope-badge-demo" : ""}`.trim();
+  host.innerHTML = `
+    <span class="scope-badge-label">${escapeHtml(tr("聚焦范围", "Focused Scope"))}</span>
+    <strong class="scope-badge-title">${escapeHtml("AI agents / skills / scripts")}</strong>
+    <span class="scope-badge-note">${escapeHtml(
+      hosted
+        ? tr("官网只负责客户端下载，真实扫描与处置仍在本机执行。", "The hosted site only distributes the client. Real scan and remediation still execute locally.")
+        : tr("只覆盖本地执行风险面，不扩展为通用系统防护产品。", "Scoped to local execution risks instead of general system hardening.")
+    )}</span>
+  `;
+}
+
+function decorateFindingsTable(job) {
+  const report = job?.report;
+  const table = document.getElementById("findingsTable");
+  if (!table || !report) {
+    return;
+  }
+  table.querySelectorAll(".finding-row").forEach((row) => {
+    const checkId = row.getAttribute("data-check-id");
+    const check = (report.checks || []).find((item) => item.id === checkId);
+    if (!check) {
+      return;
+    }
+    const relatedTargets = getRelatedTargets(check.id);
+    const primaryTarget = pickPrimaryTarget(relatedTargets);
+    const remediation = markRelatedFindingsHandled(check.id);
+    const severity = getFindingRiskProfile(check);
+    row.classList.toggle("finding-row-risk", severity.className === "risk-high");
+    row.classList.toggle("finding-row-review", remediation.status === "partial" || remediation.status === "manual-review");
+
+    const primary = row.querySelector(".finding-primary");
+    if (!primary || primary.querySelector(".finding-meta-strip")) {
+      return;
+    }
+
+    const supportLabel = primaryTarget
+      ? getSupportLevelLabel(primaryTarget.support_level || (primaryTarget.uninstall_supported ? "cleanup" : "blocked"))
+      : tr("未推导目标", "No target");
+    const tone = primaryTarget?.uninstall_supported ? "ready" : "review";
+    const meta = document.createElement("div");
+    meta.className = "finding-meta-strip";
+    meta.innerHTML = `
+      <span class="finding-aux-pill finding-aux-${escapeHtml(tone)}">${escapeHtml(supportLabel)}</span>
+      <span class="finding-inline-note">${escapeHtml(tr(`${relatedTargets.length} 个目标`, `${relatedTargets.length} target(s)`))}</span>
+    `;
+    primary.appendChild(meta);
+  });
+}
+
+function decorateTargetRail(job) {
+  const container = document.getElementById("uninstallTargetList");
+  if (!container) {
+    return;
+  }
+  const targets = getRenderableUninstallTargets(job);
+  container.querySelectorAll(".target-card").forEach((card) => {
+    const targetButton = card.querySelector("[data-target-id]");
+    const target = targets.find((item) => item.id === targetButton?.getAttribute("data-target-id"));
+    if (!target) {
+      return;
+    }
+    const remediation = getRemediationStateForTarget(target);
+    const tone = getTargetPriorityTone(target, remediation);
+    card.classList.add(`target-card-${tone}`);
+    if (card.querySelector(".target-inline-meta")) {
+      return;
+    }
+    const matchedFindings = Number(target.matched_findings_count || 0);
+    const plannedActions = Array.isArray(target.planned_actions) ? target.planned_actions.length : 0;
+    const meta = document.createElement("div");
+    meta.className = "target-inline-meta";
+    meta.innerHTML = `
+      <span class="target-priority-badge target-priority-${escapeHtml(tone)}">${escapeHtml(getTargetPriorityLabel(target, remediation))}</span>
+      <span>${escapeHtml(tr(`${matchedFindings} 个关联发现`, `${matchedFindings} related finding(s)`))}</span>
+      <span>${escapeHtml(tr(`${plannedActions} 个处置动作`, `${plannedActions} planned action(s)`))}</span>
+    `;
+    const head = card.querySelector(".target-card-head");
+    head?.insertAdjacentElement("afterend", meta);
+  });
+}
+
+function renderActionQueueSummary(job) {
+  const section = document.getElementById("targetsSection");
+  if (!section) {
+    return;
+  }
+  let host = document.getElementById("actionQueueSummary");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "actionQueueSummary";
+    host.className = "action-queue-summary";
+    const list = document.getElementById("recommendationList");
+    list?.insertAdjacentElement("beforebegin", host);
+  }
+  if (PUBLIC_SITE_MODE) {
+    host.innerHTML = `
+      <article class="action-queue-chip action-queue-chip-neutral">
+        <span>${escapeHtml(tr("分发模式", "Delivery"))}</span>
+        <strong>${escapeHtml(tr("客户端优先", "Client first"))}</strong>
+      </article>
+      <article class="action-queue-chip action-queue-chip-neutral">
+        <span>${escapeHtml(tr("处置位置", "Execution"))}</span>
+        <strong>${escapeHtml(tr("本机执行", "Local host"))}</strong>
+      </article>
+      <article class="action-queue-chip action-queue-chip-review">
+        <span>${escapeHtml(tr("风险边界", "Guardrail"))}</span>
+        <strong>${escapeHtml(tr("保守处置", "Conservative"))}</strong>
+      </article>
+    `;
+    return;
+  }
+  const targets = getRenderableUninstallTargets(job);
+  const direct = targets.filter((target) => target.uninstall_supported && target.support_level === "full").length;
+  const cleanup = targets.filter((target) => target.uninstall_supported && target.support_level === "cleanup").length;
+  const review = targets.filter((target) => {
+    const remediation = getRemediationStateForTarget(target);
+    return !target.uninstall_supported || remediation.status === "partial" || remediation.status === "manual-review";
+  }).length;
+  host.innerHTML = `
+    <article class="action-queue-chip action-queue-chip-risk">
+      <span>${escapeHtml(tr("优先处置", "Priority"))}</span>
+      <strong>${escapeHtml(String(direct))}</strong>
+    </article>
+    <article class="action-queue-chip action-queue-chip-safe">
+      <span>${escapeHtml(tr("可清理", "Cleanup"))}</span>
+      <strong>${escapeHtml(String(cleanup))}</strong>
+    </article>
+    <article class="action-queue-chip action-queue-chip-review">
+      <span>${escapeHtml(tr("人工复核", "Manual"))}</span>
+      <strong>${escapeHtml(String(review))}</strong>
+    </article>
+  `;
+}
+
+function getTargetPriorityTone(target, remediation) {
+  if (remediation.status === "removed" || remediation.status === "mitigated") {
+    return "resolved";
+  }
+  if (remediation.status === "partial" || remediation.status === "manual-review") {
+    return "review";
+  }
+  if (target.uninstall_supported && target.support_level === "full") {
+    return "urgent";
+  }
+  if (target.uninstall_supported) {
+    return "cleanup";
+  }
+  return "blocked";
+}
+
+function getTargetPriorityLabel(target, remediation) {
+  if (remediation.status === "removed" || remediation.status === "mitigated") {
+    return remediation.label || tr("已处理", "Handled");
+  }
+  if (remediation.status === "partial") {
+    return tr("残留复核", "Residual Review");
+  }
+  if (remediation.status === "manual-review") {
+    return tr("人工复核", "Manual Review");
+  }
+  if (target.uninstall_supported && target.support_level === "full") {
+    return tr("优先处置", "Priority Remediation");
+  }
+  if (target.uninstall_supported) {
+    return tr("可清理", "Cleanup Available");
+  }
+  return tr("受限目标", "Restricted Target");
 }

@@ -15,13 +15,36 @@
 </head>
 <body>
   <div class="page-shell">
-    <header class="topbar">
-      <div class="brand-block">
-        <div class="brand-mark">PC</div>
-        <div class="brand-copy">
-          <strong>Police Claw</strong>
-          <span data-i18n="brand.subtitle">安全报告工作台</span>
+    <header class="topbar enterprise-topbar">
+      <div class="topbar-main">
+        <div class="brand-block">
+          <div class="brand-mark">PC</div>
+          <div class="brand-copy">
+            <strong>Police Claw</strong>
+            <span data-i18n="brand.subtitle">企业安全控制台</span>
+          </div>
         </div>
+
+        <div class="topbar-copy">
+          <span class="eyebrow topbar-kicker" data-i18n="topbar.kicker">企业安全控制台</span>
+          <p class="topbar-subtitle" data-i18n="topbar.subtitle">面向 AI agents、skills、scripts 与本地执行风险的安全工作台</p>
+          <div class="topbar-inline">
+            <a id="heroDownloadLink" class="primary-link topbar-inline-link is-hidden" href="/download/windows/latest" data-i18n="hero.download">下载 Windows 客户端</a>
+            <span id="heroDownloadMeta" class="panel-meta" data-i18n="hero.downloadMeta">桌面客户端发布后，会在这里显示下载入口。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="console-statusbar">
+        <div class="console-status-item">
+          <span class="panel-meta" data-i18n="topbar.stateLabel">当前状态</span>
+          <span id="consoleStateBadge" class="console-status-badge">等待扫描</span>
+        </div>
+        <div class="console-status-item">
+          <span class="panel-meta" data-i18n="topbar.lastScanLabel">最近扫描</span>
+          <strong id="consoleLastScanText">--</strong>
+        </div>
+        <span id="consoleModeBadge" class="console-mode-badge is-hidden">Demo</span>
       </div>
 
       <div class="topbar-actions">
@@ -34,49 +57,42 @@
         </label>
         <a id="downloadTopLink" class="primary-link is-hidden" href="/download/windows/latest" data-i18n="topbar.download">下载 Windows 客户端</a>
         <a class="text-link" href="/architecture" target="_blank" rel="noreferrer" data-i18n="topbar.architecture">查看架构</a>
+        <button id="startScanBtn" class="primary-btn topbar-primary-action" type="button">开始真实扫描</button>
       </div>
     </header>
 
-    <section class="hero-panel">
-      <div class="hero-copy">
-        <span class="eyebrow" data-i18n="hero.eyebrow">处置工作台</span>
-        <h1 data-i18n="hero.title">在一个工作台里完成检测、解释、卸载和复核。</h1>
-        <p data-i18n="hero.description">
-          工作台保留了原始扫描与证据分析流程，并补上了真实卸载链路：
-          识别可处置目标、查看处置范围、发起后台卸载，并在同一页完成残留复核。
-        </p>
-
-        <div class="hero-actions">
-          <a id="heroDownloadLink" class="primary-link is-hidden" href="/download/windows/latest" data-i18n="hero.download">下载 Windows 客户端</a>
-          <span id="heroDownloadMeta" class="panel-meta" data-i18n="hero.downloadMeta">桌面客户端发布后，会在这里显示下载入口。</span>
-        </div>
-      </div>
-
-      <div class="hero-highlights">
-        <article class="highlight-card">
-          <span data-i18n="hero.highlight.scan.tag">扫描</span>
-          <strong data-i18n="hero.highlight.scan.title">真实 Flask 后台任务</strong>
-        </article>
-        <article class="highlight-card">
-          <span data-i18n="hero.highlight.response.tag">处置</span>
-          <strong data-i18n="hero.highlight.response.title">证据联动的卸载流程</strong>
-        </article>
-        <article class="highlight-card">
-          <span data-i18n="hero.highlight.audit.tag">审计</span>
-          <strong data-i18n="hero.highlight.audit.title">JSON、DOCX、任务日志与残留</strong>
-        </article>
-      </div>
-    </section>
-
     <div id="globalNotice" class="inline-notice is-hidden" role="status" aria-live="polite"></div>
 
-    <main class="workspace">
-      <div class="report-column">
-        <section class="panel executive-panel">
+    <main class="workspace console-workspace">
+      <aside class="nav-column">
+        <section class="panel nav-panel">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow" data-i18n="nav.eyebrow">导航</span>
+              <h2 data-i18n="nav.title">控制台</h2>
+            </div>
+          </div>
+
+          <nav class="console-nav">
+            <a class="console-nav-link is-active" href="#dashboardSection" data-i18n="nav.dashboard">Dashboard</a>
+            <a class="console-nav-link" href="#findingsSection" data-i18n="nav.findings">Findings</a>
+            <a class="console-nav-link" href="#targetsSection" data-i18n="nav.targets">Targets</a>
+            <a class="console-nav-link" href="#historySection" data-i18n="nav.history">History</a>
+          </nav>
+
+          <div class="nav-note">
+            <span class="eyebrow" data-i18n="nav.scopeEyebrow">边界</span>
+            <p data-i18n="nav.scopeBody">聚焦 AI agents、skills、scripts 与本地执行风险，不扩展为通用系统防护界面。</p>
+          </div>
+        </section>
+      </aside>
+
+      <div class="report-column main-column">
+        <section id="dashboardSection" class="panel executive-panel">
           <div class="panel-head">
             <div>
               <span class="eyebrow" data-i18n="section.summary.eyebrow">管理摘要</span>
-              <h2 data-i18n="section.summary.title">管理层总览</h2>
+              <h2 data-i18n="section.summary.title">执行概览</h2>
             </div>
           </div>
 
@@ -107,18 +123,6 @@
                 </article>
               </div>
             </div>
-
-            <div class="recommendation-card">
-              <span class="eyebrow" data-i18n="recommendation.eyebrow">下一步动作</span>
-              <h3 data-i18n="recommendation.title">建议动作</h3>
-              <div id="recommendationList" class="recommendation-list"></div>
-
-              <div class="subsection-head">
-                <strong data-i18n="recommendation.targets.title">高风险目标</strong>
-                <span id="uninstallTargetMeta" class="panel-meta">暂无可推导的卸载目标</span>
-              </div>
-              <div id="uninstallTargetList" class="target-list"></div>
-            </div>
           </div>
 
           <div id="summaryGrid" class="summary-strip"></div>
@@ -146,18 +150,30 @@
           <div id="stageHistory" class="stage-history"></div>
         </section>
 
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <span class="eyebrow" data-i18n="domains.eyebrow">安全域概览</span>
-              <h2 data-i18n="domains.title">安全域</h2>
+        <div class="board-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow" data-i18n="domains.eyebrow">安全域概览</span>
+                <h2 data-i18n="domains.title">安全域</h2>
+              </div>
+              <div id="domainPortfolioMeta" class="panel-meta">等待已完成的报告</div>
             </div>
-            <div id="domainPortfolioMeta" class="panel-meta">等待已完成的报告</div>
-          </div>
-          <div id="domainPortfolio" class="domain-portfolio"></div>
-        </section>
+            <div id="domainPortfolio" class="domain-portfolio"></div>
+          </section>
 
-        <section class="panel findings-panel">
+          <section class="panel runtime-panel-main">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow" data-i18n="runtime.eyebrow">运行时</span>
+                <h2 data-i18n="runtime.title">运行时上下文</h2>
+              </div>
+            </div>
+            <div id="runtimeGrid" class="runtime-list"></div>
+          </section>
+        </div>
+
+        <section id="findingsSection" class="panel findings-panel">
           <div class="panel-head">
             <div>
               <span class="eyebrow" data-i18n="findings.eyebrow">发现项</span>
@@ -174,8 +190,8 @@
           </div>
 
           <div class="findings-head">
-            <span data-i18n="findings.head.check">检查项</span>
-            <span data-i18n="findings.head.domain">安全域</span>
+            <span data-i18n="findings.head.check">发现项 / 目标</span>
+            <span data-i18n="findings.head.domain">类型 / 安全域</span>
             <span data-i18n="findings.head.status">状态</span>
             <span data-i18n="findings.head.risk">风险</span>
             <span data-i18n="findings.head.confidence">置信度</span>
@@ -187,16 +203,31 @@
         </section>
       </div>
 
-      <aside class="insight-column">
-        <section class="panel side-panel">
+      <aside class="insight-column right-column">
+        <section id="targetsSection" class="panel side-panel action-anchor-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="eyebrow" data-i18n="recommendation.eyebrow">建议动作</span>
+              <h2 data-i18n="recommendation.title">Recommended Remediation</h2>
+            </div>
+          </div>
+
+          <div id="recommendationList" class="recommendation-list"></div>
+
+          <div class="subsection-head">
+            <strong data-i18n="recommendation.targets.title">高风险目标</strong>
+            <span id="uninstallTargetMeta" class="panel-meta">暂无可推导的卸载目标</span>
+          </div>
+          <div id="uninstallTargetList" class="target-list"></div>
+        </section>
+
+        <section id="operationsSection" class="panel side-panel">
           <div class="panel-head compact">
             <div>
               <span class="eyebrow" data-i18n="ops.eyebrow">操作</span>
               <h2 data-i18n="ops.title">操作中心</h2>
             </div>
           </div>
-
-          <button id="startScanBtn" class="primary-btn" type="button">开始真实扫描</button>
 
           <div class="status-card">
             <span class="note-label" data-i18n="ops.currentState">当前状态</span>
@@ -233,54 +264,6 @@
         <section class="panel side-panel">
           <div class="panel-head compact">
             <div>
-              <span class="eyebrow" data-i18n="download.eyebrow">下载</span>
-              <h2 data-i18n="download.title">Windows 客户端</h2>
-            </div>
-          </div>
-          <div class="subsection-head">
-            <strong data-i18n="download.channel">发布通道</strong>
-            <span id="downloadStatusPill" class="status-pill status-queued">检查中</span>
-          </div>
-          <div id="downloadPanelMeta" class="panel-meta">尚未检测到发布包</div>
-          <div id="downloadPanelSummary" class="evidence-summary">网站负责分发安装包，真实扫描与卸载仍只在本地 Windows 客户端内执行。</div>
-          <div id="downloadFactList" class="runtime-list"></div>
-          <a id="downloadClientBtn" class="primary-link is-disabled" href="#" aria-disabled="true">下载 Windows 客户端</a>
-        </section>
-
-        <section class="panel side-panel">
-          <div class="panel-head compact">
-            <div>
-              <span class="eyebrow" data-i18n="runtime.eyebrow">运行时</span>
-              <h2 data-i18n="runtime.title">运行时上下文</h2>
-            </div>
-          </div>
-          <div id="runtimeGrid" class="runtime-list"></div>
-        </section>
-
-        <section class="panel side-panel">
-          <div class="panel-head compact">
-            <div>
-              <span class="eyebrow" data-i18n="about.eyebrow">说明</span>
-              <h2 data-i18n="about.title">安全说明</h2>
-            </div>
-          </div>
-          <div id="safetyNotesMeta" class="panel-meta">自动处置采用保守策略，并保留完整日志。</div>
-          <div id="safetyNotesList" class="result-group"></div>
-        </section>
-
-        <section class="panel side-panel">
-          <div class="panel-head compact">
-            <div>
-              <span class="eyebrow" data-i18n="history.scan.eyebrow">扫描历史</span>
-              <h2 data-i18n="history.scan.title">最近扫描</h2>
-            </div>
-          </div>
-          <div id="historyList" class="history-list"></div>
-        </section>
-
-        <section class="panel side-panel">
-          <div class="panel-head compact">
-            <div>
               <span class="eyebrow" data-i18n="uninstall.progress.eyebrow">卸载进度</span>
               <h2 data-i18n="uninstall.progress.title">处置编排器</h2>
             </div>
@@ -299,7 +282,7 @@
           <div id="uninstallLogList" class="log-list"></div>
         </section>
 
-        <section class="panel side-panel evidence-panel">
+        <section class="panel side-panel evidence-panel anchor-panel">
           <div class="panel-head compact">
             <div>
               <span class="eyebrow" data-i18n="evidence.eyebrow">证据检查器</span>
@@ -313,7 +296,7 @@
           <pre id="evidenceViewer" class="evidence-viewer">暂无证据可展示。</pre>
         </section>
 
-        <section class="panel side-panel">
+        <section class="panel side-panel anchor-panel">
           <div class="panel-head compact">
             <div>
               <span class="eyebrow" data-i18n="result.eyebrow">处置结果</span>
@@ -328,11 +311,49 @@
         <section class="panel side-panel">
           <div class="panel-head compact">
             <div>
+              <span class="eyebrow" data-i18n="about.eyebrow">说明</span>
+              <h2 data-i18n="about.title">安全说明</h2>
+            </div>
+          </div>
+          <div id="safetyNotesMeta" class="panel-meta">自动处置采用保守策略，并保留完整日志。</div>
+          <div id="safetyNotesList" class="result-group"></div>
+        </section>
+
+        <section id="historySection" class="panel side-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="eyebrow" data-i18n="history.scan.eyebrow">扫描历史</span>
+              <h2 data-i18n="history.scan.title">最近扫描</h2>
+            </div>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+
+        <section class="panel side-panel">
+          <div class="panel-head compact">
+            <div>
               <span class="eyebrow" data-i18n="history.uninstall.eyebrow">卸载历史</span>
               <h2 data-i18n="history.uninstall.title">最近处置</h2>
             </div>
           </div>
           <div id="uninstallHistoryList" class="history-list"></div>
+        </section>
+
+        <section class="panel side-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="eyebrow" data-i18n="download.eyebrow">下载</span>
+              <h2 data-i18n="download.title">Windows 客户端</h2>
+            </div>
+          </div>
+          <div class="subsection-head">
+            <strong data-i18n="download.channel">发布通道</strong>
+            <span id="downloadStatusPill" class="status-pill status-queued">检查中</span>
+          </div>
+          <div id="downloadPanelMeta" class="panel-meta">尚未检测到发布包</div>
+          <div id="downloadPanelSummary" class="evidence-summary">网站负责分发安装包，真实扫描与卸载仍只在本地 Windows 客户端内执行。</div>
+          <div id="downloadFactList" class="runtime-list"></div>
+          <a id="downloadClientBtn" class="primary-link is-disabled" href="#" aria-disabled="true">下载 Windows 客户端</a>
         </section>
       </aside>
     </main>
