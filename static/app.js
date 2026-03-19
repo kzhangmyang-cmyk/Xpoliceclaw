@@ -1,27 +1,549 @@
 const STAGES = [
-  { key: "queued", label: "Queued" },
-  { key: "collect", label: "Collecting system data" },
-  { key: "traffic", label: "Analyzing network traffic" },
-  { key: "fs", label: "Scanning filesystem footprint" },
-  { key: "model", label: "Inspecting model activity" },
-  { key: "signal", label: "Scoring detected signals" },
-  { key: "report", label: "Publishing reports" },
-  { key: "completed", label: "Completed" },
+  { key: "queued", zh: "排队中", en: "Queued" },
+  { key: "collect", zh: "收集系统数据", en: "Collecting system data" },
+  { key: "traffic", zh: "分析网络流量", en: "Analyzing network traffic" },
+  { key: "fs", zh: "扫描文件系统痕迹", en: "Scanning filesystem footprint" },
+  { key: "model", zh: "检查模型活动", en: "Inspecting model activity" },
+  { key: "signal", zh: "评估风险信号", en: "Scoring detected signals" },
+  { key: "report", zh: "生成报告", en: "Publishing reports" },
+  { key: "completed", zh: "已完成", en: "Completed" },
 ];
 
 const JOB_STATUS_LABELS = {
-  queued: "Queued",
-  running: "Running",
-  completed: "Completed",
-  failed: "Failed",
+  queued: { zh: "排队中", en: "Queued" },
+  running: { zh: "运行中", en: "Running" },
+  completed: { zh: "已完成", en: "Completed" },
+  failed: { zh: "失败", en: "Failed" },
 };
 
 const TASK_STATUS_LABELS = {
-  pending: "Pending",
-  running: "Running",
-  success: "Success",
-  failed: "Failed",
-  partial: "Partial",
+  pending: { zh: "待执行", en: "Pending" },
+  running: { zh: "执行中", en: "Running" },
+  success: { zh: "成功", en: "Success" },
+  failed: { zh: "失败", en: "Failed" },
+  partial: { zh: "部分完成", en: "Partial" },
+};
+
+const RISK_LEVEL_LABELS = {
+  critical: { zh: "严重", en: "Critical" },
+  high: { zh: "高", en: "High" },
+  medium: { zh: "中", en: "Medium" },
+  low: { zh: "低", en: "Low" },
+};
+
+const STEP_STATUS_LABELS = {
+  pending: { zh: "待执行", en: "Pending" },
+  running: { zh: "执行中", en: "Running" },
+  completed: { zh: "已完成", en: "Completed" },
+  failed: { zh: "失败", en: "Failed" },
+  success: { zh: "成功", en: "Success" },
+  unknown: { zh: "未知", en: "Unknown" },
+};
+
+const LOG_LEVEL_LABELS = {
+  info: { zh: "信息", en: "Info" },
+  warn: { zh: "警告", en: "Warn" },
+  warning: { zh: "警告", en: "Warn" },
+  error: { zh: "错误", en: "Error" },
+};
+
+const SUPPORT_LEVEL_LABELS = {
+  full: { zh: "高优先级", en: "Urgent" },
+  cleanup: { zh: "可清理", en: "Cleanup" },
+  terminate_only: { zh: "仅遏制", en: "Contain" },
+  blocked: { zh: "受限", en: "Blocked" },
+};
+
+const UNINSTALL_STEP_LABELS = {
+  "Identifying target footprint": { zh: "识别目标足迹", en: "Identifying target footprint" },
+  "Terminating active processes": { zh: "终止活动进程", en: "Terminating active processes" },
+  "Removing persistence entries": { zh: "移除持久化项", en: "Removing persistence entries" },
+  "Cleaning config and cache": { zh: "清理配置与缓存", en: "Cleaning config and cache" },
+  "Removing core files": { zh: "移除核心文件", en: "Removing core files" },
+  "Verifying leftovers": { zh: "验证残留", en: "Verifying leftovers" },
+  "Finalizing removal record": { zh: "完成处置记录", en: "Finalizing removal record" },
+};
+
+const PLANNED_ACTION_LABELS = {
+  "Terminate active processes": { zh: "终止活动进程", en: "Terminate active processes" },
+  "Remove user persistence entries": { zh: "移除用户级持久化项", en: "Remove user persistence entries" },
+  "Remove config footprint": { zh: "移除配置痕迹", en: "Remove config footprint" },
+  "Remove cache footprint": { zh: "移除缓存痕迹", en: "Remove cache footprint" },
+  "Remove explicit binary files": { zh: "移除明确识别出的程序文件", en: "Remove explicit binary files" },
+  "Preserve binary path for manual review": { zh: "保留程序路径，待人工复核", en: "Preserve binary path for manual review" },
+  "Contain runtime process only": { zh: "仅遏制运行中进程", en: "Contain runtime process only" },
+  "Escalate to manual review": { zh: "升级为人工复核", en: "Escalate to manual review" },
+};
+
+const STARTUP_KIND_LABELS = {
+  registry_run: { zh: "注册表启动项", en: "Registry Run entry" },
+  scheduled_task: { zh: "计划任务", en: "Scheduled task" },
+  launch_agent: { zh: "LaunchAgent", en: "LaunchAgent" },
+  systemd_user_service: { zh: "用户级 systemd 服务", en: "User systemd service" },
+  autostart_desktop: { zh: "自启动项", en: "Autostart entry" },
+  startup: { zh: "启动项", en: "Startup entry" },
+};
+
+const RESULT_ITEM_TYPE_LABELS = {
+  process: { zh: "进程", en: "Process" },
+  startup: { zh: "启动项", en: "Startup entry" },
+  config: { zh: "配置", en: "Config" },
+  cache: { zh: "缓存", en: "Cache" },
+  binary: { zh: "程序文件", en: "Binary" },
+  path: { zh: "路径", en: "Path" },
+  file: { zh: "文件", en: "File" },
+  directory: { zh: "目录", en: "Directory" },
+};
+
+const TARGET_TYPE_LABELS = {
+  process: { zh: "进程", en: "Process" },
+  cli: { zh: "CLI 工具", en: "CLI tool" },
+  cli_agent: { zh: "CLI 代理", en: "CLI agent" },
+  tool: { zh: "工具", en: "Tool" },
+  agent: { zh: "代理", en: "Agent" },
+  python_agent: { zh: "Python 代理", en: "Python agent" },
+  node_agent: { zh: "Node 代理", en: "Node agent" },
+  script: { zh: "脚本", en: "Script" },
+  binary: { zh: "程序", en: "Binary" },
+  service: { zh: "服务", en: "Service" },
+};
+
+const BLOCK_REASON_LABELS = {
+  insufficient_evidence: { zh: "证据不足", en: "Insufficient evidence" },
+  path_too_broad: { zh: "路径范围过宽", en: "Path too broad" },
+  user_data_overlap: { zh: "与用户数据重叠", en: "User data overlap" },
+  binary_not_safe_to_remove: { zh: "程序路径不适合自动删除", en: "Binary not safe to remove" },
+  process_only_detection: { zh: "仅发现进程迹象", en: "Process-only detection" },
+};
+
+const DOMAIN_TRANSLATIONS = {
+  credential: { zh: "凭证与身份安全", en: "Credential & Identity Security" },
+  transaction: { zh: "交易与金融安全", en: "Transaction & Financial Security" },
+  behavior: { zh: "用户行为追踪", en: "User Behavior Tracking" },
+  system: { zh: "系统权限与控制", en: "System Privilege & Control" },
+  data: { zh: "数据采集与外泄", en: "Data Collection & Exfiltration" },
+  model: { zh: "模型与 AI 上下文", en: "Model & AI Context" },
+  audit: { zh: "审计与合规", en: "Audit & Compliance" },
+};
+
+const CHECK_TRANSLATIONS = {
+  cred_password: {
+    zhTitle: "抓取账户密码",
+    enTitle: "Credential Password Access",
+    zhDescription: "检测进程是否访问密码存储 / keychain / 浏览器密码数据库",
+    enDescription: "Detect processes accessing password stores, keychains, or browser password databases.",
+  },
+  cred_ssh_keys: {
+    zhTitle: "读取 SSH 密钥",
+    enTitle: "SSH Key Access",
+    zhDescription: "检测对 ~/.ssh/id_rsa、id_ed25519 等私钥文件的访问",
+    enDescription: "Detect access to ~/.ssh/id_rsa, id_ed25519, and other private key files.",
+  },
+  cred_api_tokens: {
+    zhTitle: "窃取 API Token",
+    enTitle: "API Token Theft",
+    zhDescription: "检测环境变量和配置文件中 API 密钥的暴露与读取",
+    enDescription: "Detect exposure and reads of API keys in environment variables and config files.",
+  },
+  cred_cookies: {
+    zhTitle: "抓取浏览器 Cookie",
+    enTitle: "Browser Cookie Harvesting",
+    zhDescription: "检测对 Chrome/Firefox/Safari cookie 数据库的访问",
+    enDescription: "Detect access to Chrome, Firefox, or Safari cookie databases.",
+  },
+  cred_wallet: {
+    zhTitle: "读取加密钱包",
+    enTitle: "Crypto Wallet Access",
+    zhDescription: "检测对 wallet.dat / MetaMask vault / 助记词文件的访问",
+    enDescription: "Detect access to wallet.dat, MetaMask vaults, or seed phrase files.",
+  },
+  cred_2fa: {
+    zhTitle: "窃取 2FA 凭证",
+    enTitle: "2FA Secret Theft",
+    zhDescription: "检测对 TOTP 种子、Authenticator 数据库的访问",
+    enDescription: "Detect access to TOTP seeds or authenticator databases.",
+  },
+  cred_cert: {
+    zhTitle: "读取证书与私钥",
+    enTitle: "Certificate & Private Key Access",
+    zhDescription: "检测对 .pem / .p12 / .pfx / TLS 私钥文件的访问",
+    enDescription: "Detect access to .pem, .p12, .pfx, and TLS private key files.",
+  },
+  txn_unauthorized: {
+    zhTitle: "未授权进行交易",
+    enTitle: "Unauthorized Transactions",
+    zhDescription: "监控未授权的金融交易进程或到交易所的网络连接",
+    enDescription: "Monitor unauthorized financial transaction processes or exchange-bound network connections.",
+  },
+  txn_crypto: {
+    zhTitle: "加密货币自动交易",
+    enTitle: "Automated Crypto Trading",
+    zhDescription: "检测与 DEX / CEX API 的未授权交互",
+    enDescription: "Detect unauthorized interaction with DEX or CEX APIs.",
+  },
+  txn_payment: {
+    zhTitle: "篡改支付信息",
+    enTitle: "Payment Tampering",
+    zhDescription: "检测对支付网关请求的劫持或中间人行为",
+    enDescription: "Detect hijacking or man-in-the-middle behavior against payment gateway requests.",
+  },
+  txn_mining: {
+    zhTitle: "挖矿行为",
+    enTitle: "Cryptomining Activity",
+    zhDescription: "检测 xmrig / cpuminer 等挖矿进程及矿池连接",
+    enDescription: "Detect xmrig, cpuminer, and other mining processes or pool connections.",
+  },
+  beh_search: {
+    zhTitle: "抓取搜索行为",
+    enTitle: "Search History Harvesting",
+    zhDescription: "检测浏览器历史 / 搜索日志 / 自动补全数据的异常读取",
+    enDescription: "Detect unusual reads of browser history, search logs, or autocomplete data.",
+  },
+  beh_code: {
+    zhTitle: "追踪代码编写",
+    enTitle: "Code Activity Tracking",
+    zhDescription: "监控 .git / IDE 工作区 / 代码仓库的异常扫描",
+    enDescription: "Monitor unusual scanning of .git, IDE workspaces, or source repositories.",
+  },
+  beh_debug: {
+    zhTitle: "追踪调试行为",
+    enTitle: "Debug Behavior Tracking",
+    zhDescription: "检测 gdb / lldb / strace / pdb 等调试工具的异常调用",
+    enDescription: "Detect unusual calls to gdb, lldb, strace, pdb, and other debugging tools.",
+  },
+  beh_keylog: {
+    zhTitle: "键盘记录",
+    enTitle: "Keystroke Logging",
+    zhDescription: "检测键盘输入捕获进程 / 输入法监控 / IME 注入",
+    enDescription: "Detect keyboard capture processes, input method monitoring, or IME injection.",
+  },
+  beh_screen: {
+    zhTitle: "屏幕截图与录制",
+    enTitle: "Screen Capture & Recording",
+    zhDescription: "检测屏幕捕获 / 截图进程 / 远程桌面未授权共享",
+    enDescription: "Detect screen capture, screenshot processes, or unauthorized remote desktop sharing.",
+  },
+  beh_clipboard: {
+    zhTitle: "剪贴板监控",
+    enTitle: "Clipboard Monitoring",
+    zhDescription: "检测剪贴板内容持续读取或劫持，尤其是加密地址替换",
+    enDescription: "Detect continuous clipboard reads or hijacking, especially crypto address replacement.",
+  },
+  beh_operation_log: {
+    zhTitle: "操作记录抓取",
+    enTitle: "Operation Log Harvesting",
+    zhDescription: "检测用户操作轨迹的异常采集与外传",
+    enDescription: "Detect unusual collection and exfiltration of user activity trails.",
+  },
+  sys_root: {
+    zhTitle: "root/SYSTEM 权限运行",
+    enTitle: "root/SYSTEM Privilege Execution",
+    zhDescription: "检查 AI 进程是否以最高权限运行",
+    enDescription: "Check whether AI processes are running with the highest privileges.",
+  },
+  sys_persistence: {
+    zhTitle: "持久化驻留",
+    enTitle: "Persistence Registration",
+    zhDescription: "检测 crontab / 启动项 / systemd service 的异常注册",
+    enDescription: "Detect unusual crontab, startup item, or systemd service registration.",
+  },
+  sys_process_inject: {
+    zhTitle: "进程注入",
+    enTitle: "Process Injection",
+    zhDescription: "检测 DLL 注入 / ptrace attach / LD_PRELOAD 劫持",
+    enDescription: "Detect DLL injection, ptrace attach, or LD_PRELOAD hijacking.",
+  },
+  sys_driver: {
+    zhTitle: "内核模块/驱动加载",
+    enTitle: "Kernel Module / Driver Loading",
+    zhDescription: "检测未授权的内核模块或驱动程序加载",
+    enDescription: "Detect unauthorized kernel module or driver loading.",
+  },
+  sys_firewall: {
+    zhTitle: "防火墙规则篡改",
+    enTitle: "Firewall Rule Tampering",
+    zhDescription: "检测 iptables / Windows Firewall 规则的异常修改",
+    enDescription: "Detect abnormal changes to iptables or Windows Firewall rules.",
+  },
+  sys_dns: {
+    zhTitle: "DNS 劫持",
+    enTitle: "DNS Hijacking",
+    zhDescription: "检测 DNS 配置篡改 / hosts 文件修改 / 异常 DNS 服务器",
+    enDescription: "Detect DNS configuration tampering, hosts file edits, or suspicious DNS servers.",
+  },
+  data_file_read: {
+    zhTitle: "读取私人文件",
+    enTitle: "Private File Access",
+    zhDescription: "检测对 Documents / Photos / Downloads 的异常批量访问",
+    enDescription: "Detect unusual bulk access to Documents, Photos, or Downloads.",
+  },
+  data_file_content: {
+    zhTitle: "抓取文件内容",
+    enTitle: "File Content Extraction",
+    zhDescription: "检测文件索引 / OCR / 文本提取 / PDF 解析进程",
+    enDescription: "Detect file indexing, OCR, text extraction, or PDF parsing processes.",
+  },
+  data_cloud_upload: {
+    zhTitle: "上传云端文件",
+    enTitle: "Cloud Upload Activity",
+    zhDescription: "监控云同步进程和 rclone / s3 cp / gsutil 等上传命令",
+    enDescription: "Monitor cloud sync processes and upload commands such as rclone, s3 cp, or gsutil.",
+  },
+  data_idle_exfil: {
+    zhTitle: "待机偷跑数据",
+    enTitle: "Idle-Time Data Exfiltration",
+    zhDescription: "检测休眠进程的隐蔽网络外传行为",
+    enDescription: "Detect stealthy outbound transfer behavior from background or idle processes.",
+  },
+  data_stream: {
+    zhTitle: "平台可见全部数据流",
+    enTitle: "Platform-Wide Data Streams",
+    zhDescription: "监控大规模外传连接 / 遥测 / 分析进程",
+    enDescription: "Monitor large outbound streams, telemetry, or analytics processes.",
+  },
+  data_dns_tunnel: {
+    zhTitle: "DNS 隧道外泄",
+    enTitle: "DNS Tunnel Exfiltration",
+    zhDescription: "检测通过 DNS TXT/CNAME 记录进行的数据编码外传",
+    enDescription: "Detect encoded exfiltration through DNS TXT or CNAME records.",
+  },
+  data_steganography: {
+    zhTitle: "隐写术数据外泄",
+    enTitle: "Steganographic Exfiltration",
+    zhDescription: "检测图片 / 音频文件中嵌入隐藏数据的外传行为",
+    enDescription: "Detect exfiltration by embedding hidden data in image or audio files.",
+  },
+  data_usb: {
+    zhTitle: "USB/外接设备数据拷贝",
+    enTitle: "USB / External Device Copy",
+    zhDescription: "检测向 USB 设备或外接存储的异常大规模数据传输",
+    enDescription: "Detect unusual large-scale transfers to USB devices or external storage.",
+  },
+  data_backup_exfil: {
+    zhTitle: "备份文件外泄",
+    enTitle: "Backup Data Exfiltration",
+    zhDescription: "检测对系统备份 / Time Machine / 快照文件的异常访问",
+    enDescription: "Detect unusual access to system backups, Time Machine archives, or snapshot files.",
+  },
+  model_context: {
+    zhTitle: "数据进入模型上下文",
+    enTitle: "Sensitive Data in Model Context",
+    zhDescription: "检测 LLM / RAG 管道是否将敏感数据纳入推理上下文",
+    enDescription: "Detect whether LLM or RAG pipelines place sensitive data into inference context.",
+  },
+  model_prompt: {
+    zhTitle: "Prompt 抓取",
+    enTitle: "Prompt Harvesting",
+    zhDescription: "检测 Prompt 缓存 / system prompt / 对话历史的异常读取",
+    enDescription: "Detect unusual reads of prompt caches, system prompts, or chat history.",
+  },
+  model_finetune: {
+    zhTitle: "用户数据用于微调",
+    enTitle: "User Data Used for Fine-Tuning",
+    zhDescription: "检测本地数据是否被用于模型 fine-tune / LoRA 训练",
+    enDescription: "Detect whether local data is being used for model fine-tuning or LoRA training.",
+  },
+  model_embedding: {
+    zhTitle: "敏感数据向量化",
+    enTitle: "Sensitive Data Vectorization",
+    zhDescription: "检测私人文档被 embedding 化存入向量数据库",
+    enDescription: "Detect private documents being embedded and stored in a vector database.",
+  },
+  model_api_leak: {
+    zhTitle: "模型 API 调用泄露数据",
+    enTitle: "Sensitive Data in Model API Calls",
+    zhDescription: "检测向外部模型 API 发送的请求中是否包含敏感信息",
+    enDescription: "Detect whether outbound model API requests contain sensitive information.",
+  },
+  audit_system: {
+    zhTitle: "安全审计体系",
+    enTitle: "Security Audit Coverage",
+    zhDescription: "验证 auditd / SIEM / 安全日志系统是否正常运行",
+    enDescription: "Validate whether auditd, SIEM, or security logging systems are operating correctly.",
+  },
+  audit_log_tamper: {
+    zhTitle: "审计日志篡改",
+    enTitle: "Audit Log Tampering",
+    zhDescription: "检测安全日志的异常删除 / 截断 / 权限变更",
+    enDescription: "Detect unusual deletion, truncation, or permission changes on security logs.",
+  },
+  audit_compliance: {
+    zhTitle: "合规性缺失",
+    enTitle: "Compliance Gap",
+    zhDescription: "检查 GDPR / CCPA / 个人信息保护法等合规措施是否到位",
+    enDescription: "Check whether GDPR, CCPA, PIPL, and similar compliance controls are in place.",
+  },
+  audit_leak_risk: {
+    zhTitle: "综合数据泄露风险",
+    enTitle: "Composite Data Leakage Risk",
+    zhDescription: "多类目同时触发时的复合风险评估",
+    enDescription: "Evaluate compound leakage risk when multiple categories trigger at the same time.",
+  },
+};
+
+const LANGUAGE_STORAGE_KEY = "policeClawLocale";
+const SUPPORTED_LANGUAGES = new Set(["zh", "en"]);
+const STATIC_TRANSLATIONS = {
+  zh: {
+    "brand.subtitle": "安全报告工作台",
+    "language.label": "语言",
+    "topbar.download": "下载 Windows 客户端",
+    "topbar.architecture": "查看架构",
+    "hero.eyebrow": "处置工作台",
+    "hero.title": "在一个工作台里完成检测、解释、卸载和复核。",
+    "hero.description": "工作台保留了原始扫描与证据分析流程，并补上了真实卸载链路：识别可处置目标、查看处置范围、发起后台卸载，并在同一页完成残留复核。",
+    "hero.download": "下载 Windows 客户端",
+    "hero.downloadMeta": "桌面客户端发布后，会在这里显示下载入口。",
+    "hero.highlight.scan.tag": "扫描",
+    "hero.highlight.scan.title": "真实 Flask 后台任务",
+    "hero.highlight.response.tag": "处置",
+    "hero.highlight.response.title": "证据联动的卸载流程",
+    "hero.highlight.audit.tag": "审计",
+    "hero.highlight.audit.title": "JSON、DOCX、任务日志与残留",
+    "section.summary.eyebrow": "管理摘要",
+    "section.summary.title": "管理层总览",
+    "summary.meta.host": "主机",
+    "summary.meta.system": "系统",
+    "summary.meta.scanId": "扫描 ID",
+    "summary.meta.finishedAt": "完成时间",
+    "recommendation.eyebrow": "下一步动作",
+    "recommendation.title": "建议动作",
+    "recommendation.targets.title": "高风险目标",
+    "progress.eyebrow": "扫描生命周期",
+    "progress.title": "执行进度",
+    "domains.eyebrow": "安全域概览",
+    "domains.title": "安全域",
+    "findings.eyebrow": "发现项",
+    "findings.title": "发现工作台",
+    "findings.searchPlaceholder": "搜索检查项、域、描述或 ID",
+    "findings.head.check": "检查项",
+    "findings.head.domain": "安全域",
+    "findings.head.status": "状态",
+    "findings.head.risk": "风险",
+    "findings.head.confidence": "置信度",
+    "findings.head.evidence": "证据",
+    "findings.head.action": "操作",
+    "ops.eyebrow": "操作",
+    "ops.title": "操作中心",
+    "ops.currentState": "当前状态",
+    "ops.scanLabel": "扫描",
+    "ops.timeLabel": "时间",
+    "ops.removableTargets": "可处置目标",
+    "ops.lastUninstall": "最近卸载",
+    "download.eyebrow": "下载",
+    "download.title": "Windows 客户端",
+    "download.channel": "发布通道",
+    "runtime.eyebrow": "运行时",
+    "runtime.title": "运行时上下文",
+    "about.eyebrow": "说明",
+    "about.title": "安全说明",
+    "history.scan.eyebrow": "扫描历史",
+    "history.scan.title": "最近扫描",
+    "uninstall.progress.eyebrow": "卸载进度",
+    "uninstall.progress.title": "处置编排器",
+    "evidence.eyebrow": "证据检查器",
+    "evidence.title": "证据检查器",
+    "result.eyebrow": "处置结果",
+    "result.title": "残留复核",
+    "history.uninstall.eyebrow": "卸载历史",
+    "history.uninstall.title": "最近处置",
+    "modal.eyebrow": "卸载确认",
+    "modal.title": "确认处置范围",
+    "modal.target": "目标",
+    "modal.safety": "安全提醒",
+    "modal.safetyTitle": "卸载可能会影响此工具继续运行。",
+    "modal.safetyBody": "如果执行器为了保护路径而保留部分内容，可能仍需要人工复核残留。",
+    "modal.scope": "计划范围",
+    "modal.mode": "模式",
+    "modal.toggle.startup": "清理启动项和持久化项",
+    "modal.toggle.cache": "清理缓存目录",
+    "modal.toggle.config": "清理配置目录",
+    "modal.toggle.binary": "删除明确识别出的程序文件",
+    "modal.confirm": "输入 UNINSTALL CONFIRMED 后继续",
+    "modal.confirmPlaceholder": "UNINSTALL CONFIRMED",
+    "modal.cancel": "取消",
+    "modal.submit": "确认卸载",
+  },
+  en: {
+    "brand.subtitle": "Security Report Workbench",
+    "language.label": "Language",
+    "topbar.download": "Download Windows Client",
+    "topbar.architecture": "View Architecture",
+    "hero.eyebrow": "Operational Reporting",
+    "hero.title": "Detect, explain, remove, and verify in one workbench.",
+    "hero.description": "The workbench keeps the original scan and evidence workflow, and adds a real uninstall track: identify removable targets, inspect scope, launch a background uninstall, and review residuals without leaving the report page.",
+    "hero.download": "Download Windows Client",
+    "hero.downloadMeta": "Desktop client downloads appear here when a release package is available.",
+    "hero.highlight.scan.tag": "Scan",
+    "hero.highlight.scan.title": "Real Flask background jobs",
+    "hero.highlight.response.tag": "Response",
+    "hero.highlight.response.title": "Evidence-linked uninstall flow",
+    "hero.highlight.audit.tag": "Audit",
+    "hero.highlight.audit.title": "JSON, DOCX, task logs, leftovers",
+    "section.summary.eyebrow": "Executive Summary",
+    "section.summary.title": "Management Summary",
+    "summary.meta.host": "Host",
+    "summary.meta.system": "System",
+    "summary.meta.scanId": "Scan ID",
+    "summary.meta.finishedAt": "Finished At",
+    "recommendation.eyebrow": "Next Moves",
+    "recommendation.title": "Recommended Actions",
+    "recommendation.targets.title": "High-Risk Targets",
+    "progress.eyebrow": "Scan Lifecycle",
+    "progress.title": "Execution Progress",
+    "domains.eyebrow": "Domain Portfolio",
+    "domains.title": "Security Domains",
+    "findings.eyebrow": "Findings",
+    "findings.title": "Finding Workbench",
+    "findings.searchPlaceholder": "Search checks, domains, descriptions, or IDs",
+    "findings.head.check": "Check",
+    "findings.head.domain": "Domain",
+    "findings.head.status": "Status",
+    "findings.head.risk": "Risk",
+    "findings.head.confidence": "Confidence",
+    "findings.head.evidence": "Evidence",
+    "findings.head.action": "Action",
+    "ops.eyebrow": "Operations",
+    "ops.title": "Operations Center",
+    "ops.currentState": "Current State",
+    "ops.scanLabel": "Scan",
+    "ops.timeLabel": "Time",
+    "ops.removableTargets": "Removable Targets",
+    "ops.lastUninstall": "Last Uninstall",
+    "download.eyebrow": "Download",
+    "download.title": "Windows Client",
+    "download.channel": "Release Channel",
+    "runtime.eyebrow": "Runtime",
+    "runtime.title": "Runtime Context",
+    "about.eyebrow": "About",
+    "about.title": "Safety Notes",
+    "history.scan.eyebrow": "Scan History",
+    "history.scan.title": "Recent Scans",
+    "uninstall.progress.eyebrow": "Uninstall Progress",
+    "uninstall.progress.title": "Removal Orchestrator",
+    "evidence.eyebrow": "Evidence Inspector",
+    "evidence.title": "Evidence Inspector",
+    "result.eyebrow": "Removal Result",
+    "result.title": "Residual Review",
+    "history.uninstall.eyebrow": "Uninstall History",
+    "history.uninstall.title": "Recent Removals",
+    "modal.eyebrow": "Uninstall Confirmation",
+    "modal.title": "Review scope and confirm",
+    "modal.target": "Target",
+    "modal.safety": "Safety Notes",
+    "modal.safetyTitle": "Uninstall may disable this tool.",
+    "modal.safetyBody": "Some leftovers may require manual review if the runner preserves protected paths.",
+    "modal.scope": "Planned Scope",
+    "modal.mode": "Mode",
+    "modal.toggle.startup": "Remove startup and persistence entries",
+    "modal.toggle.cache": "Remove cache footprint",
+    "modal.toggle.config": "Remove config footprint",
+    "modal.toggle.binary": "Remove explicit binary files",
+    "modal.confirm": "Type UNINSTALL CONFIRMED to continue",
+    "modal.confirmPlaceholder": "UNINSTALL CONFIRMED",
+    "modal.cancel": "Cancel",
+    "modal.submit": "Confirm Uninstall",
+  },
 };
 
 const CLIENT_BOOTSTRAP = window.POLICE_CLAW_BOOTSTRAP || {};
@@ -40,6 +562,7 @@ const TASK_ACTIVE_STATUSES = new Set(["pending", "running"]);
 const TASK_TERMINAL_STATUSES = new Set(["success", "failed", "partial"]);
 const MANUAL_REVIEW_BLOCK_CODES = new Set(["path_too_broad", "user_data_overlap", "binary_not_safe_to_remove"]);
 const state = {
+  language: resolvePreferredLanguage(),
   jobs: [],
   currentJob: null,
   selectedCheckId: null,
@@ -72,6 +595,418 @@ document.addEventListener("DOMContentLoaded", () => {
   bootstrap();
 });
 
+function resolvePreferredLanguage() {
+  const stored = (() => {
+    try {
+      return window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    } catch (error) {
+      return "";
+    }
+  })();
+  const raw = String(stored || navigator.language || "zh").toLowerCase();
+  return raw.startsWith("en") ? "en" : "zh";
+}
+
+function tr(zh, en = zh) {
+  return state.language === "en" ? en : zh;
+}
+
+function getLanguageLocale() {
+  return state.language === "en" ? "en-US" : "zh-CN";
+}
+
+function getJobStatusLabel(status) {
+  const entry = JOB_STATUS_LABELS[status];
+  return entry ? tr(entry.zh, entry.en) : safeText(status, tr("未知", "Unknown"));
+}
+
+function getRiskLevelLabel(level) {
+  const entry = RISK_LEVEL_LABELS[String(level || "").toLowerCase()];
+  return entry ? tr(entry.zh, entry.en) : safeText(level, tr("未知", "Unknown"));
+}
+
+function getTaskStatusLabel(status) {
+  const entry = TASK_STATUS_LABELS[status];
+  return entry ? tr(entry.zh, entry.en) : safeText(status, tr("未知", "Unknown"));
+}
+
+function getStepStatusLabel(status) {
+  const entry = STEP_STATUS_LABELS[status];
+  return entry ? tr(entry.zh, entry.en) : safeText(status, tr("未知", "Unknown"));
+}
+
+function getLogLevelLabel(level) {
+  const entry = LOG_LEVEL_LABELS[String(level || "").toLowerCase()];
+  return entry ? tr(entry.zh, entry.en) : safeText(level, tr("信息", "Info"));
+}
+
+function getSupportLevelLabel(level) {
+  const entry = SUPPORT_LEVEL_LABELS[level];
+  return entry ? tr(entry.zh, entry.en) : safeText(level, tr("受限", "Blocked"));
+}
+
+function getBlockedReasonLabel(code) {
+  const entry = BLOCK_REASON_LABELS[code];
+  return entry ? tr(entry.zh, entry.en) : "";
+}
+
+function getUninstallStepLabel(label) {
+  const entry = UNINSTALL_STEP_LABELS[label];
+  return entry ? tr(entry.zh, entry.en) : safeText(label, tr("待执行步骤", "Pending step"));
+}
+
+function getPlannedActionLabel(action) {
+  const entry = PLANNED_ACTION_LABELS[action];
+  return entry ? tr(entry.zh, entry.en) : safeText(action, tr("待处理动作", "Pending action"));
+}
+
+function getStartupKindLabel(kind) {
+  const entry = STARTUP_KIND_LABELS[kind];
+  return entry ? tr(entry.zh, entry.en) : safeText(kind, tr("启动项", "Startup entry"));
+}
+
+function getResultItemTypeLabel(type) {
+  const entry = RESULT_ITEM_TYPE_LABELS[type];
+  return entry ? tr(entry.zh, entry.en) : safeText(type, tr("条目", "Item"));
+}
+
+function getTargetTypeLabel(type) {
+  const raw = String(type || "").trim();
+  const normalized = raw.toLowerCase().replace(/[_-]+/g, " ");
+  if (normalized === "local tool" || normalized === "localtool") {
+    return tr("本地工具", "Local Tool");
+  }
+  if (normalized === "unknown") {
+    return tr("未知目标", "Unknown target");
+  }
+  const entry = TARGET_TYPE_LABELS[type];
+  if (entry) {
+    return tr(entry.zh, entry.en);
+  }
+  return safeText(humanizeSlug(raw), tr("目标", "Target"));
+}
+
+function getTargetName(target) {
+  return safeText(target?.display_name || target?.name, tr("未命名目标", "Unnamed target"));
+}
+
+function basenameFromPath(value) {
+  if (!value) {
+    return "";
+  }
+  const bits = String(value).split(/[\\/]/).filter(Boolean);
+  return bits[bits.length - 1] || String(value);
+}
+
+function buildBlockedReasonDetail(code) {
+  if (code === "path_too_broad") {
+    return tr("识别出的路径范围过宽，自动删除会突破安全边界。", "The inferred path is too broad and would exceed the safe removal boundary.");
+  }
+  if (code === "user_data_overlap") {
+    return tr("目标路径与用户数据重叠，执行器默认保留给人工复核。", "The target path overlaps user data, so the runner preserves it for manual review.");
+  }
+  if (code === "binary_not_safe_to_remove") {
+    return tr("程序文件路径不够精确，不能直接自动删除。", "The binary path is not precise enough for automatic removal.");
+  }
+  if (code === "process_only_detection") {
+    return tr("当前只识别到运行中的进程证据，无法安全扩展到文件删除。", "Only runtime process evidence was identified, so file removal is not safe.");
+  }
+  if (code === "insufficient_evidence") {
+    return tr("当前证据不足以把足迹缩小到安全可删范围。", "The current evidence is not precise enough to reduce the footprint to a safely removable scope.");
+  }
+  return tr("这个目标需要人工复核后再决定是否执行文件删除。", "This target needs human review before any file removal is attempted.");
+}
+
+function buildTargetSummaryText(target) {
+  if (!target) {
+    return tr("尚未选择目标。", "No target selected.");
+  }
+  const parts = [
+    tr(`命中 ${target.matched_findings_count || 0} 条发现`, `${target.matched_findings_count || 0} matched finding(s)`),
+    tr(`置信度 ${formatPercent(target.confidence || 0)}`, `${formatPercent(target.confidence || 0)} confidence`),
+  ];
+  if (target.primary_executable) {
+    parts.push(tr(`主程序 ${basenameFromPath(target.primary_executable)}`, `Primary executable ${basenameFromPath(target.primary_executable)}`));
+  } else if (target.primary_workdir) {
+    parts.push(tr(`工作目录 ${basenameFromPath(target.primary_workdir)}`, `Workdir ${basenameFromPath(target.primary_workdir)}`));
+  }
+  if (target.startup_entries?.length) {
+    parts.push(tr(`${target.startup_entries.length} 个持久化项`, `${target.startup_entries.length} persistence item(s)`));
+  }
+  if (target.path_warnings?.length) {
+    parts.push(tr("部分路径受安全规则保护", "Some paths are protected by safety rules"));
+  }
+  if (target.support_level === "terminate_only") {
+    parts.push(tr("当前仅支持遏制运行进程", "Runtime-only containment"));
+  } else if (!target.uninstall_supported && target.blocked_reason_code) {
+    parts.push(getBlockedReasonLabel(target.blocked_reason_code));
+  }
+  return parts.filter(Boolean).join(tr("，", " · "));
+}
+
+function buildTargetReasonText(target) {
+  if (!target) {
+    return tr("请选择一个目标查看处置范围。", "Select a target to review scope.");
+  }
+  if (target.support_level === "full") {
+    return tr("程序路径、工作目录和用户级清理范围都能稳定收敛到同一目标，可在安全校验后执行完整卸载。", "Executable path, workdir, and user-scoped cleanup paths all converge on the same target, so a full uninstall can run after safety validation.");
+  }
+  if (target.support_level === "cleanup") {
+    return tr("持久化、配置和缓存范围明确，但程序文件默认保留给人工复核。", "Persistence, config, and cache paths are clear, but the binary path remains under manual review.");
+  }
+  if (target.support_level === "terminate_only") {
+    return tr("当前证据足以终止活动进程，但文件范围仍然过宽，只适合先做遏制。", "Current evidence is strong enough to stop the active process, but the file scope is still too broad for deletion.");
+  }
+  return buildBlockedReasonDetail(target.blocked_reason_code);
+}
+
+function buildTargetActionHint(target) {
+  if (!target) {
+    return tr("尚未选择目标。", "No target selected.");
+  }
+  if (!target.uninstall_supported) {
+    return buildBlockedReasonDetail(target.blocked_reason_code);
+  }
+  if (target.support_level === "cleanup") {
+    return tr("会清理持久化、配置和缓存，程序文件默认保留。", "The runner will clean persistence, config, and cache, while preserving the binary path.");
+  }
+  if (target.support_level === "terminate_only") {
+    return tr("当前只会终止进程，不会自动删除文件。", "Only process containment is allowed right now; files stay untouched.");
+  }
+  return tr("所有文件动作在执行前都会再次经过后端路径安全校验。", "Every file action is revalidated by the backend before execution.");
+}
+
+function translateManualStep(text) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (value === "Confirm the linked process is stopped, then rerun a scan before removing anything else.") {
+    return tr("先确认关联进程已经停止，再重新执行一次扫描，然后再处理其他残留。", value);
+  }
+  if (value === "Review remaining user-level persistence items and remove only entries that still point to the target.") {
+    return tr("检查剩余的用户级持久化项，只移除仍然明确指向该目标的条目。", value);
+  }
+  if (value === "Inspect preserved or leftover paths and remove only target-specific files inside the approved footprint.") {
+    return tr("检查已保留或残留的路径，只删除已批准范围内明确属于目标的文件。", value);
+  }
+  if (value === "Keep binary removal manual because the identified path overlaps a protected or user-data-heavy location.") {
+    return tr("程序文件删除必须保留为人工操作，因为当前识别路径与受保护位置或高密度用户数据区域重叠。", value);
+  }
+  if (value === "Contain the target by stopping its process and keep file cleanup under manual review.") {
+    return tr("先通过停止进程遏制目标，文件清理继续保持人工复核。", value);
+  }
+  return value;
+}
+
+function translateAuditText(text) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (state.language === "en") {
+    return value;
+  }
+  const exact = new Map([
+    ["Manual review is required.", "需要人工复核。"],
+    ["No actionable footprint remained after safety validation.", "经过安全校验后，没有剩余可执行的处置足迹。"],
+    ["Path still exists after removal pass.", "处置执行后路径仍然存在。"],
+    ["Persistence file still exists.", "持久化文件仍然存在。"],
+    ["Process is still active.", "进程仍在运行。"],
+    ["Removed HKCU Run entry.", "已移除 HKCU Run 启动项。"],
+    ["Removed scheduled task.", "已移除计划任务。"],
+    ["Config cleanup was disabled by request.", "已按请求跳过配置清理。"],
+    ["Cache cleanup was disabled by request.", "已按请求跳过缓存清理。"],
+    ["Binary removal was disabled by request.", "已按请求跳过程序文件删除。"],
+    ["Binary removal was requested, but the path did not pass safety validation.", "已请求删除程序文件，但路径未通过安全校验。"],
+    ["Skipped process that no longer matches the target.", "已跳过不再匹配目标身份的进程。"],
+  ]);
+  if (exact.has(value)) {
+    return exact.get(value);
+  }
+  if (value.startsWith("Rejected ")) {
+    return value
+      .replace(/^Rejected /, "已拒绝 ")
+      .replace(" path ", " 路径 ")
+      .replace(/: /, "：");
+  }
+  if (value.startsWith("Persistence cleanup failed:")) {
+    return value.replace("Persistence cleanup failed:", "持久化清理失败：");
+  }
+  if (value.startsWith("Process termination failed:")) {
+    return value.replace("Process termination failed:", "进程终止失败：");
+  }
+  if (value.startsWith("Skipped ")) {
+    return value.replace("Skipped ", "已跳过 ");
+  }
+  return value;
+}
+
+function translateLogMessage(text) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (state.language === "en") {
+    return value;
+  }
+  if (value.startsWith("Preparing uninstall plan for ")) {
+    return value.replace("Preparing uninstall plan for ", "正在为以下目标生成卸载计划：").replace(/\.$/, "。");
+  }
+  if (/^Plan includes \d+ process\(es\), \d+ persistence item\(s\), and \d+ file path\(s\)\.$/.test(value)) {
+    return value
+      .replace(/^Plan includes /, "计划包含 ")
+      .replace(" process(es), ", " 个进程、")
+      .replace(" persistence item(s), and ", " 个持久化项，以及 ")
+      .replace(" file path(s).", " 条文件路径。");
+  }
+  if (value === "No active processes were linked to the target.") {
+    return "没有发现与目标关联的活动进程。";
+  }
+  if (value === "Startup and persistence cleanup was disabled by request.") {
+    return "已按请求禁用启动项和持久化清理。";
+  }
+  if (value === "No user-level persistence entries were identified.") {
+    return "没有识别到用户级持久化项。";
+  }
+  if (value === "No config or cache paths were planned for removal.") {
+    return "本次计划中没有配置或缓存路径需要删除。";
+  }
+  if (value === "No explicit binary paths were approved for removal.") {
+    return "没有明确获批的程序文件路径可供删除。";
+  }
+  if (value === "Verification completed with no remaining approved footprint.") {
+    return "校验完成，未发现剩余已批准足迹。";
+  }
+  if (/^Verification found \d+ leftover item\(s\)\.$/.test(value)) {
+    return value.replace(/^Verification found /, "校验发现 ").replace(" leftover item(s).", " 个残留项。");
+  }
+  if (/^Process \d+ was already gone\.$/.test(value)) {
+    return value.replace(/^Process /, "进程 ").replace(" was already gone.", " 已经退出。");
+  }
+  if (/^Terminated process \d+\.$/.test(value)) {
+    return value.replace(/^Terminated process /, "已终止进程 ").replace(/\.$/, "。");
+  }
+  if (/^Killed process \d+ after timeout\.$/.test(value)) {
+    return value.replace(/^Killed process /, "进程 ").replace(" after timeout.", " 在超时后被强制结束。");
+  }
+  if (/^Failed to terminate process \d+: /.test(value)) {
+    return value.replace(/^Failed to terminate process /, "终止进程 ").replace(/: /, " 失败：");
+  }
+  if (/^Persistence cleanup failed for /.test(value)) {
+    return value.replace(/^Persistence cleanup failed for /, "持久化清理失败：").replace(/: /, "：");
+  }
+  if (/^Skipped .*: /.test(value)) {
+    return value.replace(/^Skipped /, "已跳过 ").replace(/: /, "：");
+  }
+  if (/^Task failed unexpectedly: /.test(value)) {
+    return value.replace(/^Task failed unexpectedly: /, "任务意外失败：");
+  }
+  return value;
+}
+
+function buildTaskSummaryText(task) {
+  if (!task) {
+    return tr("任务尚未开始。", "Task has not started.");
+  }
+  const currentStepText = task.current_step
+    ? getUninstallStepLabel(task.current_step)
+    : tr("任务已创建，等待执行。", "Task created, waiting for execution.");
+  if (task.status === "success") {
+    return tr("处置已完成，目标范围内没有需要继续人工处理的残留。", "Removal completed and no further manual follow-up is required for the approved scope.");
+  }
+  if (task.status === "partial") {
+    return tr("处置已完成主体动作，但仍有保留项或残留项需要人工复核。", "Primary removal steps completed, but preserved or leftover items still require manual review.");
+  }
+  if (task.status === "failed") {
+    return tr("处置任务失败，请查看日志和残留复核面板。", "Removal task failed. Review logs and the residual panel.");
+  }
+  return currentStepText;
+}
+
+function setLanguage(language) {
+  const next = SUPPORTED_LANGUAGES.has(language) ? language : "zh";
+  state.language = next;
+  try {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
+  } catch (error) {
+    // Ignore unavailable storage.
+  }
+  document.documentElement.lang = getLanguageLocale();
+  applyStaticTranslations();
+  applyFilterSelectCopy();
+  rerenderLanguageState();
+}
+
+function translateStaticKey(key) {
+  const bucket = STATIC_TRANSLATIONS[state.language] || STATIC_TRANSLATIONS.zh;
+  return bucket[key] || key;
+}
+
+function applyStaticTranslations() {
+  const select = document.getElementById("languageSelect");
+  if (select) {
+    select.value = state.language;
+  }
+  if (!PUBLIC_SITE_MODE) {
+    document.title = tr("Police Claw 安全报告工作台", "Police Claw Security Report Workbench");
+  }
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = translateStaticKey(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+    node.setAttribute("placeholder", translateStaticKey(node.dataset.i18nPlaceholder));
+  });
+}
+
+function applyFilterSelectCopy() {
+  const statusFilter = document.getElementById("statusFilter");
+  const sortFilter = document.getElementById("sortFilter");
+  const uninstallMode = document.getElementById("uninstallMode");
+  const currentStatus = state.filters.status;
+  const currentSort = state.filters.sort;
+  const currentMode = uninstallMode ? uninstallMode.value : "standard";
+  if (statusFilter) {
+    statusFilter.innerHTML = [
+      ["all", tr("全部状态", "All Status")],
+      ["risk", tr("仅风险项", "Risk Only")],
+      ["clear", tr("仅清洁项", "Clear Only")],
+      ["evidence", tr("仅有证据", "With Evidence")],
+    ].map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("");
+    statusFilter.value = currentStatus;
+  }
+  if (sortFilter) {
+    sortFilter.innerHTML = [
+      ["risk", tr("按风险排序", "Sort by Risk")],
+      ["evidence", tr("按证据排序", "Sort by Evidence")],
+      ["domain", tr("按安全域排序", "Sort by Domain")],
+      ["name", tr("按名称排序", "Sort by Name")],
+    ].map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("");
+    sortFilter.value = currentSort;
+  }
+  if (uninstallMode) {
+    uninstallMode.innerHTML = [
+      ["standard", tr("标准", "Standard")],
+      ["deep", tr("深度", "Deep")],
+    ].map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("");
+    uninstallMode.value = currentMode;
+  }
+}
+
+function rerenderLanguageState() {
+  if (PUBLIC_SITE_MODE) {
+    renderPublicSiteMode();
+    renderModal();
+    return;
+  }
+  if (state.currentJob || state.jobs.length || state.uninstallHistory.length) {
+    renderJob(state.currentJob);
+    renderModal();
+    return;
+  }
+  renderEmptyState();
+}
+
 function buildModalState() {
   return {
     open: false,
@@ -91,6 +1026,10 @@ function bindEvents() {
     return;
   }
   state.eventsBound = true;
+  const languageSelect = document.getElementById("languageSelect");
+  if (languageSelect) {
+    languageSelect.addEventListener("change", (event) => setLanguage(event.target.value));
+  }
   document.getElementById("startScanBtn").addEventListener("click", handlePrimaryAction);
   document.getElementById("historyList").addEventListener("click", onHistoryClick);
   document.getElementById("domainPortfolio").addEventListener("click", onDomainClick);
@@ -113,6 +1052,9 @@ function bindEvents() {
 }
 
 async function bootstrap() {
+  document.documentElement.lang = getLanguageLocale();
+  applyStaticTranslations();
+  applyFilterSelectCopy();
   renderEmptyState();
   renderGlobalNotice();
   loadReleaseInfo().catch(() => {});
@@ -125,12 +1067,12 @@ async function bootstrap() {
 
   const failures = [];
   await Promise.all([
-    loadJobs().catch((error) => failures.push(`Scan history: ${error.message}`)),
-    loadUninstallHistory().catch((error) => failures.push(`Uninstall history: ${error.message}`)),
+    loadJobs().catch((error) => failures.push(tr(`扫描历史：${error.message}`, `Scan history: ${error.message}`))),
+    loadUninstallHistory().catch((error) => failures.push(tr(`卸载历史：${error.message}`, `Uninstall history: ${error.message}`))),
   ]);
 
   if (failures.length) {
-    setGlobalNotice("warn", "Partial data loaded", failures.join(" "));
+    setGlobalNotice("warn", tr("数据仅部分加载", "Partial data loaded"), failures.join(" "));
   }
 
   try {
@@ -187,7 +1129,7 @@ async function startScan() {
 
   try {
     clearGlobalNotice();
-    const job = await requestJson("/api/scans", { method: "POST" }, "Unable to start a scan.");
+    const job = await requestJson("/api/scans", { method: "POST" }, tr("无法启动扫描。", "Unable to start a scan."));
     state.selectedCheckId = null;
     state.currentJob = job;
     renderJob(job);
@@ -202,13 +1144,13 @@ async function startScan() {
 }
 
 async function loadJobs() {
-  const payload = await requestJson("/api/scans", {}, "Unable to load scan history.");
+  const payload = await requestJson("/api/scans", {}, tr("无法加载扫描历史。", "Unable to load scan history."));
   state.jobs = payload.items || [];
   renderHistory();
 }
 
 async function loadJob(jobId) {
-  const job = await requestJson(`/api/scans/${jobId}`, {}, "Unable to load the selected scan.");
+  const job = await requestJson(`/api/scans/${jobId}`, {}, tr("无法加载所选扫描。", "Unable to load the selected scan."));
   state.currentJob = job;
   ensureSelectedCheck(job);
   renderJob(job);
@@ -219,7 +1161,7 @@ async function fetchUninstallTargets(jobId = null) {
   const payload = await requestJson(
     `/api/uninstall/targets${query}`,
     {},
-    "Unable to load uninstall targets.",
+    tr("无法加载卸载目标。", "Unable to load uninstall targets."),
   );
   state.uninstallTargets = payload.items || [];
   state.uninstallSourceJobId = payload.source_job_id || null;
@@ -233,7 +1175,7 @@ async function loadUninstallTargets() {
 }
 
 async function loadUninstallHistory() {
-  const payload = await requestJson("/api/uninstall/history", {}, "Unable to load uninstall history.");
+  const payload = await requestJson("/api/uninstall/history", {}, tr("无法加载卸载历史。", "Unable to load uninstall history."));
   state.uninstallHistory = payload.items || [];
   if (state.uninstallTask) {
     const refreshed = state.uninstallHistory.find((task) => task.id === state.uninstallTask.id);
@@ -248,7 +1190,7 @@ async function loadUninstallHistory() {
 }
 
 async function loadUninstallTask(taskId) {
-  const task = await requestJson(`/api/uninstall/${taskId}`, {}, "Unable to load uninstall task details.");
+  const task = await requestJson(`/api/uninstall/${taskId}`, {}, tr("无法加载卸载任务详情。", "Unable to load uninstall task details."));
   state.uninstallTask = task;
   renderUninstallPanel();
   syncOperationPanel(state.currentJob);
@@ -261,7 +1203,7 @@ async function loadUninstallResult(taskId) {
   const result = await requestJson(
     `/api/uninstall/${taskId}/result`,
     {},
-    "Unable to load the uninstall result.",
+    tr("无法加载卸载结果。", "Unable to load the uninstall result."),
   );
   state.uninstallResult = result;
   renderUninstallResult();
@@ -270,13 +1212,20 @@ async function loadUninstallResult(taskId) {
 async function loadReleaseInfo() {
   state.releaseStatus = "checking";
   renderDownloadPanel();
+  const isLoopbackDev = ["127.0.0.1", "localhost"].includes(window.location.hostname) && !CLIENT_BOOTSTRAP.desktopShell;
+  if (isLoopbackDev && !PUBLIC_SITE_MODE) {
+    state.releaseInfo = null;
+    state.releaseStatus = hasDownloadAsset() ? "ready" : "unavailable";
+    renderDownloadPanel();
+    return;
+  }
   try {
     const response = await fetch(UPDATE_MANIFEST_URL, {
       headers: {
         Accept: "application/json",
       },
     });
-    const payload = await parseJson(response, "Unable to check the latest public release.");
+    const payload = await parseJson(response, tr("无法检查最新公开发布版本。", "Unable to check the latest public release."));
     state.releaseInfo = payload;
     state.releaseStatus = "ready";
   } catch (error) {
@@ -389,31 +1338,31 @@ function refreshUninstallViews() {
 function syncOperationPanel(job) {
   if (PUBLIC_SITE_MODE) {
     document.getElementById("jobStateText").textContent = hasDownloadAsset()
-      ? "Public download site"
-      : "Release package unavailable";
+      ? tr("公开下载站", "Public download site")
+      : tr("发布包不可用", "Release package unavailable");
     document.getElementById("jobMetaText").textContent = hasDownloadAsset()
-      ? `Windows installer ${DOWNLOAD_ASSET.version || "--"} is ready for direct download.`
-      : "Build a Windows release package to enable direct website downloads.";
+      ? tr(`Windows 安装包 ${DOWNLOAD_ASSET.version || "--"} 已可直接下载。`, `Windows installer ${DOWNLOAD_ASSET.version || "--"} is ready for direct download.`)
+      : tr("请先构建 Windows 发布包，网站才会开放直接下载。", "Build a Windows release package to enable direct website downloads.");
     document.getElementById("scanIdLabel").textContent = DOWNLOAD_ASSET.version || "--";
     document.getElementById("scanTimeLabel").textContent = hasDownloadAsset()
       ? formatFileSize(DOWNLOAD_ASSET.sizeBytes)
       : "--";
     document.getElementById("uninstallAvailableLabel").textContent = "--";
-    document.getElementById("uninstallLastStatus").textContent = "Local Only";
+    document.getElementById("uninstallLastStatus").textContent = tr("仅本地", "Local Only");
     document.getElementById("uninstallLastMeta").textContent =
-      "Real scan and uninstall remain available after the Windows client is installed.";
+      tr("真实扫描与卸载只在安装后的 Windows 客户端中可用。", "Real scan and uninstall remain available after the Windows client is installed.");
     return;
   }
 
   const stageText = getStageLabel(job?.stage_key, job?.stage_label);
   const statusText = job?.status === "failed"
-    ? "Scan failed"
-    : stageText || "Waiting for a scan";
+    ? tr("扫描失败", "Scan failed")
+    : stageText || tr("等待扫描", "Waiting for a scan");
   const metaText = job?.report
     ? `${job.report.host || "--"} / ${job.report.os || "--"}`
     : job?.created_at
-      ? `Job created at ${formatDate(job.created_at)}`
-      : "No active scan job yet";
+      ? tr(`任务创建于 ${formatDate(job.created_at)}`, `Job created at ${formatDate(job.created_at)}`)
+      : tr("当前还没有活动中的扫描任务", "No active scan job yet");
 
   document.getElementById("jobStateText").textContent = statusText;
   document.getElementById("jobMetaText").textContent = metaText;
@@ -427,13 +1376,13 @@ function syncOperationPanel(job) {
   const scopedHistory = getScopedUninstallHistory(job);
   const lastTask = scopedHistory[0] || state.uninstallHistory[0];
   document.getElementById("uninstallLastStatus").textContent = lastTask
-    ? TASK_STATUS_LABELS[lastTask.status] || lastTask.status
-    : "None";
+    ? getTaskStatusLabel(lastTask.status)
+    : tr("无", "None");
   document.getElementById("uninstallLastMeta").textContent = lastTask
-    ? `${lastTask.target_name} / ${formatDate(lastTask.updated_at)}${lastTask.status === "partial" ? " / Manual review required" : ""}`
+    ? `${lastTask.target_name} / ${formatDate(lastTask.updated_at)}${lastTask.status === "partial" ? tr(" / 需要人工复核", " / Manual review required") : ""}`
     : state.uninstallSourceScanId
-      ? `Targets sourced from scan ${state.uninstallSourceScanId}`
-      : "No uninstall task has run yet";
+      ? tr(`目标来源于扫描 ${state.uninstallSourceScanId}`, `Targets sourced from scan ${state.uninstallSourceScanId}`)
+      : tr("还没有执行过卸载任务", "No uninstall task has run yet");
 }
 
 function renderExecutiveSummary(job) {
@@ -450,21 +1399,21 @@ function renderExecutiveSummary(job) {
 
   if (PUBLIC_SITE_MODE) {
     badge.className = "report-badge report-badge-info";
-    badge.textContent = hasDownloadAsset() ? "Website Download" : "Release Pending";
-    headline.textContent = "Download the Windows client to scan and remediate the local machine.";
+    badge.textContent = hasDownloadAsset() ? tr("网站下载", "Website Download") : tr("等待发布", "Release Pending");
+    headline.textContent = tr("先下载 Windows 客户端，再在本机执行扫描与处置。", "Download the Windows client to scan and remediate the local machine.");
     narrative.textContent = hasDownloadAsset()
-      ? "The hosted site distributes the desktop installer. Real scanning, evidence collection, and uninstall actions still run locally on Windows after installation."
-      : "The public site is live, but no installer package is attached yet. Build a Windows release to enable direct client downloads.";
-    metaHost.textContent = "Windows Client";
+      ? tr("网站负责分发桌面安装包。真实扫描、证据采集和卸载动作仍只会在安装后的 Windows 本机执行。", "The hosted site distributes the desktop installer. Real scanning, evidence collection, and uninstall actions still run locally on Windows after installation.")
+      : tr("公网站点已经上线，但还没有挂载安装包。请先构建 Windows 发布包以开启客户端下载。", "The public site is live, but no installer package is attached yet. Build a Windows release to enable direct client downloads.");
+    metaHost.textContent = tr("Windows 客户端", "Windows Client");
     metaOs.textContent = "Windows 10+";
     metaScanId.textContent = DOWNLOAD_ASSET.version || "--";
     metaScanTime.textContent = hasDownloadAsset() ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--";
     summaryGrid.innerHTML = [
-      { value: hasDownloadAsset() ? DOWNLOAD_ASSET.version || "--" : "--", label: "Installer Version" },
-      { value: hasDownloadAsset() ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--", label: "Package Size" },
-      { value: "Local", label: "Execution Scope" },
-      { value: "Conservative", label: "Removal Boundary" },
-      { value: "Persisted", label: "History Recovery" },
+      { value: hasDownloadAsset() ? DOWNLOAD_ASSET.version || "--" : "--", label: tr("安装包版本", "Installer Version") },
+      { value: hasDownloadAsset() ? formatFileSize(DOWNLOAD_ASSET.sizeBytes) : "--", label: tr("安装包大小", "Package Size") },
+      { value: tr("本地", "Local"), label: tr("执行范围", "Execution Scope") },
+      { value: tr("保守", "Conservative"), label: tr("删除边界", "Removal Boundary") },
+      { value: tr("持久化", "Persisted"), label: tr("历史恢复", "History Recovery") },
     ].map((card) => `
       <article class="summary-card">
         <span>${escapeHtml(card.label)}</span>
@@ -474,23 +1423,23 @@ function renderExecutiveSummary(job) {
     recommendationList.innerHTML = [
       {
         tone: "neutral",
-        tag: "Download",
-        title: hasDownloadAsset() ? "Install the Windows client" : "Build a release package",
+        tag: tr("下载", "Download"),
+        title: hasDownloadAsset() ? tr("安装 Windows 客户端", "Install the Windows client") : tr("构建发布包", "Build a release package"),
         body: hasDownloadAsset()
-          ? "Use the direct installer to deploy the local workbench, then run scans and uninstall tasks on the Windows host."
-          : "No installer is published yet. Build dist/release first so the website can serve a Windows client.",
+          ? tr("通过安装包部署本地工作台，然后在 Windows 主机上执行扫描和卸载任务。", "Use the direct installer to deploy the local workbench, then run scans and uninstall tasks on the Windows host.")
+          : tr("当前还没有发布安装包。请先构建 dist/release，网站才能分发 Windows 客户端。", "No installer is published yet. Build dist/release first so the website can serve a Windows client."),
       },
       {
         tone: "warn",
-        tag: "Boundary",
-        title: "The hosted site does not scan the visitor machine",
-        body: "All real scan and uninstall actions still execute inside the installed Windows client, not in the remote browser session.",
+        tag: tr("边界", "Boundary"),
+        title: tr("网站不会扫描访问者电脑", "The hosted site does not scan the visitor machine"),
+        body: tr("所有真实扫描与卸载动作仍然只会在已安装的 Windows 客户端中执行，而不是远端浏览器会话。", "All real scan and uninstall actions still execute inside the installed Windows client, not in the remote browser session."),
       },
       {
         tone: "info",
-        tag: "Audit",
-        title: "Reports and task history stay local",
-        body: "The installed client keeps scan history, uninstall history, and report artifacts under the local runtime root for later review.",
+        tag: tr("审计", "Audit"),
+        title: tr("报告与任务历史保存在本地", "Reports and task history stay local"),
+        body: tr("已安装客户端会把扫描历史、卸载历史和报告产物保存在本地运行时目录，便于后续复核。", "The installed client keeps scan history, uninstall history, and report artifacts under the local runtime root for later review."),
       },
     ].map((item) => `
       <article class="recommendation-item recommendation-${escapeHtml(item.tone || "neutral")}">
@@ -505,25 +1454,25 @@ function renderExecutiveSummary(job) {
 
   if (!report) {
     badge.className = "report-badge";
-    badge.textContent = "Idle";
-    headline.textContent = job?.status === "failed" ? "The latest scan failed." : "Waiting for a completed scan";
-    narrative.textContent = job?.error || "The report workbench will populate after a successful scan finishes.";
+    badge.textContent = tr("空闲", "Idle");
+    headline.textContent = job?.status === "failed" ? tr("最近一次扫描失败。", "The latest scan failed.") : tr("等待已完成的扫描", "Waiting for a completed scan");
+    narrative.textContent = job?.error || tr("扫描成功完成后，报告工作台会自动填充内容。", "The report workbench will populate after a successful scan finishes.");
     metaHost.textContent = "--";
     metaOs.textContent = "--";
     metaScanId.textContent = job?.scan_id || "--";
     metaScanTime.textContent = "--";
-    summaryGrid.innerHTML = buildEmptyCard("Summary metrics appear after a completed report is available.");
-    recommendationList.innerHTML = buildEmptyCard("Recommended actions are generated from the latest completed report.");
+    summaryGrid.innerHTML = buildEmptyCard(tr("有可用的已完成报告后，这里会显示摘要指标。", "Summary metrics appear after a completed report is available."));
+    recommendationList.innerHTML = buildEmptyCard(tr("建议动作会根据最近一次完成的报告自动生成。", "Recommended actions are generated from the latest completed report."));
     renderUninstallTargets();
     return;
   }
 
   const posture = getPosture(report);
   badge.className = `report-badge ${posture.badgeClass}`;
-  badge.textContent = report.demo_mode ? `${posture.label} / Demo` : posture.label;
+  badge.textContent = report.demo_mode ? `${posture.label} / ${tr("演示", "Demo")}` : posture.label;
   headline.textContent = posture.headline;
   narrative.textContent = report.demo_mode
-    ? `Demo fixture loaded. ${buildNarrative(report)}`
+    ? `${tr("已加载演示数据。", "Demo fixture loaded.")} ${buildNarrative(report)}`
     : buildNarrative(report);
   metaHost.textContent = report.host || "--";
   metaOs.textContent = report.os || "--";
@@ -541,11 +1490,11 @@ function renderExecutiveSummary(job) {
     return remediation.status === "partial" || remediation.status === "manual-review";
   });
   const summaryCards = [
-    { value: report.summary.total_risks, label: "Risk Findings" },
-    { value: report.summary.max_risk_score, label: "Max Risk Score" },
-    { value: report.runtime?.result_overview?.active_signals ?? "--", label: "Active Signals" },
-    { value: `${resolvedTargets.length}/${supportedTargets.length}`, label: "Auto-Remediated" },
-    { value: manualReviewTargets.length, label: "Residual Review" },
+    { value: report.summary.total_risks, label: tr("风险发现", "Risk Findings") },
+    { value: report.summary.max_risk_score, label: tr("最高风险分", "Max Risk Score") },
+    { value: report.runtime?.result_overview?.active_signals ?? "--", label: tr("活动信号", "Active Signals") },
+    { value: `${resolvedTargets.length}/${supportedTargets.length}`, label: tr("自动处置完成", "Auto-Remediated") },
+    { value: manualReviewTargets.length, label: tr("残留复核", "Residual Review") },
   ];
 
   summaryGrid.innerHTML = summaryCards.map((card) => `
@@ -574,25 +1523,25 @@ function renderUninstallTargets() {
 
   if (PUBLIC_SITE_MODE) {
     meta.textContent = hasDownloadAsset()
-      ? "Targets appear after the client completes a local scan"
-      : "Publish an installer to activate website downloads";
+      ? tr("客户端完成本地扫描后才会显示目标", "Targets appear after the client completes a local scan")
+      : tr("发布安装包后网站下载入口才会启用", "Publish an installer to activate website downloads");
     container.innerHTML = buildEmptyCard(
       hasDownloadAsset()
-        ? "This hosted page distributes the Windows client. Inferred uninstall targets appear only inside the local workbench after installation."
-        : "No release package is available yet. Build a Windows installer so the website can hand off to the local client."
+        ? tr("这个网站只分发 Windows 客户端。推导出的卸载目标只会在安装后的本地工作台里出现。", "This hosted page distributes the Windows client. Inferred uninstall targets appear only inside the local workbench after installation.")
+        : tr("当前还没有可用发布包。请先构建 Windows 安装包，网站才能把用户引导到本地客户端。", "No release package is available yet. Build a Windows installer so the website can hand off to the local client.")
     );
     return;
   }
 
   if (!targets.length) {
-    meta.textContent = "No inferred uninstall targets yet";
-    container.innerHTML = buildEmptyCard("The backend will infer removable targets from the latest completed scan.");
+    meta.textContent = tr("暂无可推导的卸载目标", "No inferred uninstall targets yet");
+    container.innerHTML = buildEmptyCard(tr("后端会根据最近一次完成的扫描推导可处置目标。", "The backend will infer removable targets from the latest completed scan."));
     return;
   }
 
   const supported = targets.filter((target) => target.uninstall_supported);
-  const sourceLabel = state.uninstallSourceScanId ? ` / Source ${state.uninstallSourceScanId}` : "";
-  meta.textContent = `${supported.length} supported / ${targets.length} total${sourceLabel}`;
+  const sourceLabel = state.uninstallSourceScanId ? tr(` / 来源 ${state.uninstallSourceScanId}`, ` / Source ${state.uninstallSourceScanId}`) : "";
+  meta.textContent = tr(`${supported.length} 个可直接处置 / 共 ${targets.length} 个目标${sourceLabel}`, `${supported.length} supported / ${targets.length} total${sourceLabel}`);
   const displayTargets = targets.slice(0, 6);
 
   container.innerHTML = displayTargets.map((target) => {
@@ -609,30 +1558,38 @@ function renderUninstallTargets() {
     const statusLabel = remediation.label || (
       target.uninstall_supported
         ? target.support_level === "full"
-          ? "Urgent"
+          ? tr("高优先级", "Urgent")
           : target.support_level === "cleanup"
-            ? "Cleanup"
-            : "Contain"
-        : "Blocked"
+            ? tr("可清理", "Cleanup")
+            : tr("仅遏制", "Contain")
+        : tr("受限", "Blocked")
     );
+    const targetName = getTargetName(target);
+    const targetType = getTargetTypeLabel(target.type);
+    const targetSummary = buildTargetSummaryText(target);
+    const targetReason = buildTargetReasonText(target);
+    const vendorText = target.vendor && !["unknown", "--"].includes(String(target.vendor).trim().toLowerCase())
+      ? `${target.vendor} / `
+      : "";
+    const targetHint = remediation.label ? remediation.detail : buildTargetActionHint(target);
     return `
       <article class="target-card">
         <div class="target-card-head">
           <div>
-            <strong>${escapeHtml(target.display_name || target.name)}</strong>
-            <span>${escapeHtml(target.type)} / Risk ${escapeHtml(String(target.risk_score))} / Confidence ${escapeHtml(formatPercent(target.confidence || 0))}</span>
+            <strong>${escapeHtml(targetName)}</strong>
+            <span>${escapeHtml(targetType)} / ${escapeHtml(tr(`风险 ${String(target.risk_score)}`, `Risk ${String(target.risk_score)}`))} / ${escapeHtml(tr(`置信度 ${formatPercent(target.confidence || 0)}`, `Confidence ${formatPercent(target.confidence || 0)}`))}</span>
           </div>
           <span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
         </div>
         <div class="target-card-body">
-          <div>${escapeHtml(target.target_summary || target.evidence_summary || `${target.matched_findings_count} matched finding(s)`)}</div>
-          <div>${escapeHtml(target.rationale || target.vendor || "Unknown vendor")}</div>
+          <div>${escapeHtml(targetSummary)}</div>
+          <div>${escapeHtml(`${vendorText}${targetReason}`)}</div>
         </div>
         <div class="finding-actions">
-          <button class="action-btn ghost" type="button" data-target-action="scope" data-target-id="${escapeHtml(target.id)}">View Scope</button>
+          <button class="action-btn ghost" type="button" data-target-action="scope" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("查看范围", "View Scope"))}</button>
           ${target.uninstall_supported && !["removed", "mitigated"].includes(remediation.status)
-            ? `<button class="action-btn danger" type="button" data-target-action="uninstall" data-target-id="${escapeHtml(target.id)}">Uninstall</button>`
-            : `<span class="panel-meta">${escapeHtml(remediation.label ? remediation.detail : target.unsupported_reason || "Not removable")}</span>`}
+            ? `<button class="action-btn danger" type="button" data-target-action="uninstall" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("一键卸载", "Uninstall"))}</button>`
+            : `<span class="panel-meta">${escapeHtml(targetHint)}</span>`}
         </div>
       </article>
     `;
@@ -641,7 +1598,7 @@ function renderUninstallTargets() {
 
 function renderProgress(job) {
   const progress = job?.progress ?? 0;
-  document.getElementById("progressLabel").textContent = getStageLabel(job?.stage_key, job?.stage_label) || "Ready";
+  document.getElementById("progressLabel").textContent = getStageLabel(job?.stage_key, job?.stage_label) || tr("就绪", "Ready");
   document.getElementById("progressValue").textContent = `${progress}%`;
   document.getElementById("progressBar").style.width = `${progress}%`;
 
@@ -657,7 +1614,7 @@ function renderProgress(job) {
     return `
       <div class="${classes.join(" ")}">
         <span class="eyebrow">${String(index + 1).padStart(2, "0")}</span>
-        <strong>${escapeHtml(stage.label)}</strong>
+        <strong>${escapeHtml(tr(stage.zh, stage.en))}</strong>
       </div>
     `;
   }).join("");
@@ -665,7 +1622,7 @@ function renderProgress(job) {
   const stageHistory = job?.stage_history || [];
   const historyContainer = document.getElementById("stageHistory");
   if (!stageHistory.length) {
-    historyContainer.innerHTML = buildEmptyCard("Stage history appears once a scan has started.");
+    historyContainer.innerHTML = buildEmptyCard(tr("扫描开始后，这里会显示阶段历史。", "Stage history appears once a scan has started."));
     return;
   }
 
@@ -683,16 +1640,16 @@ function renderProgress(job) {
 function renderArtifacts(job) {
   const container = document.getElementById("artifactRow");
   if (!job?.artifacts?.json && !job?.artifacts?.docx) {
-    container.innerHTML = buildEmptyCard("Report downloads appear when the scan completes.");
+    container.innerHTML = buildEmptyCard(tr("扫描完成后，这里会出现报告下载入口。", "Report downloads appear when the scan completes."));
     return;
   }
 
   const items = [];
   if (job.artifacts.json_url) {
-    items.push({ type: "JSON", label: "Download structured report", href: job.artifacts.json_url });
+    items.push({ type: "JSON", label: tr("下载结构化报告", "Download structured report"), href: job.artifacts.json_url });
   }
   if (job.artifacts.docx_url) {
-    items.push({ type: "DOCX", label: "Download document report", href: job.artifacts.docx_url });
+    items.push({ type: "DOCX", label: tr("下载文档报告", "Download document report"), href: job.artifacts.docx_url });
   }
 
   container.innerHTML = items.map((item) => `
@@ -706,20 +1663,20 @@ function renderArtifacts(job) {
 function renderRuntime(job) {
   const container = document.getElementById("runtimeGrid");
   if (!job) {
-    container.innerHTML = buildEmptyCard("No runtime context available yet.");
+    container.innerHTML = buildEmptyCard(tr("当前还没有运行时上下文。", "No runtime context available yet."));
     return;
   }
 
   const stats = job.report?.runtime?.stats || job.stats || {};
   const rows = [
-    ["Processes", stats.processes],
-    ["Connections", stats.connections],
-    ["Open Files", stats.open_files],
-    ["Env Signals", stats.env_signals],
+    [tr("进程数", "Processes"), stats.processes],
+    [tr("连接数", "Connections"), stats.connections],
+    [tr("打开文件", "Open Files"), stats.open_files],
+    [tr("环境信号", "Env Signals"), stats.env_signals],
     ["DNS", Array.isArray(stats.dns_servers) ? stats.dns_servers.join(", ") || "--" : "--"],
-    ["Outbound", stats.outbound_count],
-    ["Cloud Endpoints", stats.cloud_endpoints],
-    ["Model Processes", stats.model_processes],
+    [tr("外联数", "Outbound"), stats.outbound_count],
+    [tr("云端点", "Cloud Endpoints"), stats.cloud_endpoints],
+    [tr("模型进程", "Model Processes"), stats.model_processes],
   ];
 
   container.innerHTML = rows.map(([label, value]) => `
@@ -738,53 +1695,53 @@ function renderSafetyNotes(job) {
   const partial = getScopedUninstallHistory(job).filter((task) => task.status === "partial").length;
   const notes = [
     {
-      title: "Capability scope",
-      body: "Automatic handling is limited to clearly scoped user-level agent footprints, persistence entries, config paths, cache paths, and explicit binaries.",
+      title: tr("能力范围", "Capability scope"),
+      body: tr("自动处置只覆盖边界清晰的用户级代理痕迹、持久化项、配置目录、缓存目录和明确识别出的程序文件。", "Automatic handling is limited to clearly scoped user-level agent footprints, persistence entries, config paths, cache paths, and explicit binaries."),
     },
     {
-      title: "Manual review",
-      body: "Blocked, terminate-only, and partial outcomes are normal guardrail states. They mean the runner preserved something on purpose or needs a human to verify scope.",
+      title: tr("人工复核", "Manual review"),
+      body: tr("受限、仅终止和部分完成都属于正常安全护栏状态，表示执行器主动保留了部分内容，或需要人工确认范围。", "Blocked, terminate-only, and partial outcomes are normal guardrail states. They mean the runner preserved something on purpose or needs a human to verify scope."),
     },
     {
-      title: "Deletion boundary",
-      body: "The runner will not remove root paths, user home roots, browser profiles, workspace directories, or any broad directory that fails safety validation.",
+      title: tr("删除边界", "Deletion boundary"),
+      body: tr("执行器不会删除根目录、用户主目录、浏览器配置目录、工作区目录，或任何未通过安全校验的宽泛路径。", "The runner will not remove root paths, user home roots, browser profiles, workspace directories, or any broad directory that fails safety validation."),
     },
       {
-        title: "History persistence",
-        body: `Completed scan and uninstall summaries are stored under ${CLIENT_BOOTSTRAP.runtimeRoot || "the local runtime root"} so the workbench can recover recent history after a restart.`,
+        title: tr("历史持久化", "History persistence"),
+        body: tr(`已完成的扫描和卸载摘要会保存在 ${CLIENT_BOOTSTRAP.runtimeRoot || "本地运行时目录"} 下，便于工作台在重启后恢复最近历史。`, `Completed scan and uninstall summaries are stored under ${CLIENT_BOOTSTRAP.runtimeRoot || "the local runtime root"} so the workbench can recover recent history after a restart.`),
       },
     ];
 
   if (CLIENT_BOOTSTRAP.desktopShell) {
     notes.push({
-      title: "Desktop session",
+      title: tr("桌面会话", "Desktop session"),
       body: CLIENT_BOOTSTRAP.adminMode
-        ? "The client is running in desktop mode with administrator rights, so protected uninstall steps can execute on the local machine."
-        : "The client is running in desktop mode without administrator rights. Some uninstall steps may be preserved until the launcher is elevated.",
+        ? tr("客户端正在以桌面模式并带管理员权限运行，因此受保护的卸载步骤可以在本机执行。", "The client is running in desktop mode with administrator rights, so protected uninstall steps can execute on the local machine.")
+        : tr("客户端正在以桌面模式运行，但当前没有管理员权限。部分卸载步骤会保留，直到启动器提权后再执行。", "The client is running in desktop mode without administrator rights. Some uninstall steps may be preserved until the launcher is elevated."),
     });
   }
 
   if (PUBLIC_SITE_MODE) {
     notes.push({
-      title: "Hosted website mode",
+      title: tr("网站模式", "Hosted website mode"),
       body: hasDownloadAsset()
-        ? "This public site only distributes the Windows installer. Real scan, evidence collection, and uninstall still execute after the local client is installed."
-        : "This public site is running without an attached installer package. Publish a release build to enable direct downloads.",
+        ? tr("这个公开站点只分发 Windows 安装包。真实扫描、证据采集和卸载仍然在本地客户端安装后执行。", "This public site only distributes the Windows installer. Real scan, evidence collection, and uninstall still execute after the local client is installed.")
+        : tr("这个公开站点当前还没有挂载安装包。请先发布构建产物，才能开启直接下载。", "This public site is running without an attached installer package. Publish a release build to enable direct downloads."),
     });
   }
 
   if (job?.report?.demo_mode || job?.demo_mode || job?.source_type === "demo") {
     notes.push({
-      title: "Demo fixture",
-      body: "The current record was loaded from curated demo data for presentation. It does not represent a live scan or a live uninstall run.",
+      title: tr("演示数据", "Demo fixture"),
+      body: tr("当前记录来自演示用的预置数据，不代表一次真实扫描或真实卸载。", "The current record was loaded from curated demo data for presentation. It does not represent a live scan or a live uninstall run."),
     });
   }
 
   meta.textContent = partial
-    ? `${partial} residual review item(s) remain in this scope.`
+    ? tr(`当前范围内还有 ${partial} 项残留需要复核。`, `${partial} residual review item(s) remain in this scope.`)
     : blocked
-      ? `${blocked} target(s) remain blocked for manual follow-up.`
-      : "Automatic handling is conservative and fully logged.";
+      ? tr(`还有 ${blocked} 个目标处于受限状态，需要人工跟进。`, `${blocked} target(s) remain blocked for manual follow-up.`)
+      : tr("自动处置采用保守策略，并保留完整日志。", "Automatic handling is conservative and fully logged.");
 
   container.innerHTML = notes.map((note) => `
     <article class="result-item result-item-note">
@@ -797,23 +1754,23 @@ function renderSafetyNotes(job) {
 function renderHistory() {
   const container = document.getElementById("historyList");
   if (!state.jobs.length) {
-    container.innerHTML = buildEmptyCard("No scan history yet.");
+    container.innerHTML = buildEmptyCard(tr("还没有扫描历史。", "No scan history yet."));
     return;
   }
 
   container.innerHTML = state.jobs.map((job) => {
     const active = state.currentJob?.id === job.id ? "active" : "";
     const riskCount = job.result_overview?.risk_count ?? job.report?.summary?.total_risks ?? "--";
-    const demoSuffix = job.demo_mode || job.source_type === "demo" ? " / Demo fixture" : "";
+    const demoSuffix = job.demo_mode || job.source_type === "demo" ? tr(" / 演示数据", " / Demo fixture") : "";
     return `
       <button class="history-card ${active}" type="button" data-job-id="${job.id}">
         <div class="history-head">
           <h3>${escapeHtml(job.scan_id || job.id.toUpperCase())}</h3>
-          <span class="status-pill status-${escapeHtml(job.status)}">${escapeHtml(JOB_STATUS_LABELS[job.status] || job.status)}</span>
+          <span class="status-pill status-${escapeHtml(job.status)}">${escapeHtml(getJobStatusLabel(job.status))}</span>
         </div>
         <div class="history-meta">
           <span>${escapeHtml(`${getStageLabel(job.stage_key, job.stage_label)}${demoSuffix}`)}</span>
-          <span>Risk ${escapeHtml(String(riskCount))}</span>
+          <span>${escapeHtml(tr(`风险 ${String(riskCount)}`, `Risk ${String(riskCount)}`))}</span>
         </div>
         <div class="history-meta">
           <span>${escapeHtml(formatDate(job.updated_at))}</span>
@@ -827,25 +1784,28 @@ function renderHistory() {
 function renderUninstallHistory() {
   const container = document.getElementById("uninstallHistoryList");
   if (!state.uninstallHistory.length) {
-    container.innerHTML = buildEmptyCard("No uninstall tasks have been started yet.");
+    container.innerHTML = buildEmptyCard(tr("还没有发起过卸载任务。", "No uninstall tasks have been started yet."));
     return;
   }
 
   container.innerHTML = state.uninstallHistory.slice(0, 5).map((task) => {
     const active = state.uninstallTask?.id === task.id ? "active" : "";
+    const currentStepLabel = task.current_step
+      ? getUninstallStepLabel(task.current_step)
+      : tr("尚未开始步骤", "No step yet");
     return `
       <button class="history-card ${active}" type="button" data-uninstall-id="${task.id}">
         <div class="history-head">
           <h3>${escapeHtml(task.target_name)}</h3>
-          <span class="status-pill status-${escapeHtml(task.status)}">${escapeHtml(TASK_STATUS_LABELS[task.status] || task.status)}</span>
+          <span class="status-pill status-${escapeHtml(task.status)}">${escapeHtml(getTaskStatusLabel(task.status))}</span>
         </div>
         <div class="history-meta">
-          <span>${escapeHtml(task.current_step || "No step yet")}</span>
+          <span>${escapeHtml(currentStepLabel)}</span>
           <span>${escapeHtml(String(task.progress || 0))}%</span>
         </div>
         <div class="history-meta">
           <span>${escapeHtml(formatDate(task.updated_at))}</span>
-          <span>${escapeHtml(task.target_type || "--")}</span>
+          <span>${escapeHtml(task.target_type ? getTargetTypeLabel(task.target_type) : "--")}</span>
         </div>
       </button>
     `;
@@ -857,8 +1817,8 @@ function renderDomainPortfolio(job) {
   const meta = document.getElementById("domainPortfolioMeta");
   const report = job?.report;
   if (!report) {
-    container.innerHTML = buildEmptyCard("Security domain cards appear when a completed report is available.");
-    meta.textContent = "Waiting for a completed report";
+    container.innerHTML = buildEmptyCard(tr("有可用的已完成报告后，这里会显示安全域卡片。", "Security domain cards appear when a completed report is available."));
+    meta.textContent = tr("等待已完成的报告", "Waiting for a completed report");
     syncDomainFilterOptions([]);
     return;
   }
@@ -866,7 +1826,7 @@ function renderDomainPortfolio(job) {
   const domains = getDomainEntries(report);
   syncDomainFilterOptions(domains);
   const riskyDomains = domains.filter((domain) => domain.risks > 0).length;
-  meta.textContent = `${riskyDomains} / ${domains.length} domains with flagged findings`;
+  meta.textContent = tr(`${riskyDomains} / ${domains.length} 个安全域存在风险发现`, `${riskyDomains} / ${domains.length} domains with flagged findings`);
 
   container.innerHTML = domains.map((domain) => {
     const isSelected = state.filters.domain === domain.id;
@@ -879,13 +1839,13 @@ function renderDomainPortfolio(job) {
             <span class="domain-icon">${escapeHtml(domain.icon || "")}</span>
             <div>
               <strong>${escapeHtml(safeText(domain.name, humanizeSlug(domain.id)))}</strong>
-              <span>${escapeHtml(String(domain.risks))} risk / ${escapeHtml(String(domain.total))} checks</span>
+              <span>${escapeHtml(tr(`${String(domain.risks)} 个风险 / ${String(domain.total)} 项检查`, `${String(domain.risks)} risk / ${String(domain.total)} checks`))}</span>
             </div>
           </div>
           <strong>${escapeHtml(String(domain.max_score))}</strong>
         </div>
         <div class="domain-meter"><span style="width:${width}%"></span></div>
-        <div class="domain-support">${escapeHtml(topFinding ? displayCheckTitle(topFinding) : "No significant risk currently in this domain.")}</div>
+        <div class="domain-support">${escapeHtml(topFinding ? displayCheckTitle(topFinding) : tr("当前安全域中没有明显风险。", "No significant risk currently in this domain."))}</div>
       </button>
     `;
   }).join("");
@@ -896,17 +1856,17 @@ function renderFindings(job) {
   const meta = document.getElementById("findingsMeta");
   const report = job?.report;
   if (!report) {
-    table.innerHTML = buildEmptyCard("Findings will populate after the scan report is ready.");
-    meta.textContent = "0 records";
+    table.innerHTML = buildEmptyCard(tr("扫描报告准备完成后，这里会显示发现项。", "Findings will populate after the scan report is ready."));
+    meta.textContent = tr("0 条记录", "0 records");
     return;
   }
 
   const checks = applyFindingFilters(report.checks || []);
-  meta.textContent = `${checks.length} visible / ${(report.checks || []).length} total`;
+  meta.textContent = tr(`${checks.length} 条可见 / 共 ${(report.checks || []).length} 条`, `${checks.length} visible / ${(report.checks || []).length} total`);
 
   if (!checks.length) {
     state.selectedCheckId = null;
-    table.innerHTML = buildEmptyCard("No findings match the current filter set.");
+    table.innerHTML = buildEmptyCard(tr("当前筛选条件下没有匹配的发现项。", "No findings match the current filter set."));
     return;
   }
 
@@ -921,7 +1881,7 @@ function renderFindings(job) {
     const remediation = markRelatedFindingsHandled(check.id);
     const resolved = remediation.status === "removed" || remediation.status === "mitigated";
     const riskStatus = isFlagged(check) ? "status-risk" : "status-clear";
-    const riskLabel = isFlagged(check) ? "Risk" : "Clear";
+    const riskLabel = isFlagged(check) ? tr("风险", "Risk") : tr("清洁", "Clear");
     const width = Math.max(2, Number(check.risk_score || 0));
 
     return `
@@ -933,7 +1893,7 @@ function renderFindings(job) {
           </div>
           <div class="finding-domain">
             <span>${escapeHtml(check.domain_icon || "")}</span>
-            <span>${escapeHtml(safeText(check.domain_name, humanizeSlug(check.domain)))}</span>
+            <span>${escapeHtml(getCheckDomainLabel(check))}</span>
           </div>
           <div>
             <span class="finding-status ${riskStatus}">${escapeHtml(riskLabel)}</span>
@@ -956,35 +1916,35 @@ function renderFindings(job) {
 
 function renderFindingAction(target, remediation) {
   if (!target) {
-    return `<span class="panel-meta">No target</span>`;
+    return `<span class="panel-meta">${escapeHtml(tr("无关联目标", "No target"))}</span>`;
   }
   if (remediation.status === "removed" || remediation.status === "mitigated") {
-    return `<span class="status-pill status-success">${escapeHtml(remediation.label || "Handled")}</span>`;
+    return `<span class="status-pill status-success">${escapeHtml(remediation.label || tr("已处理", "Handled"))}</span>`;
   }
   if (remediation.status === "partial") {
     return `
-      <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">View Scope</button>
-      <span class="panel-meta">Residual review required</span>
+      <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("查看范围", "View Scope"))}</button>
+      <span class="panel-meta">${escapeHtml(tr("需要残留复核", "Residual review required"))}</span>
     `;
   }
   if (remediation.status === "manual-review") {
     return `
-      <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">View Scope</button>
-      <span class="panel-meta">${escapeHtml(remediation.detail || "Manual review required")}</span>
+      <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("查看范围", "View Scope"))}</button>
+      <span class="panel-meta">${escapeHtml(remediation.detail || tr("需要人工复核", "Manual review required"))}</span>
     `;
   }
   if (remediation.status === "running") {
-    return `<span class="status-pill status-running">In Progress</span>`;
+    return `<span class="status-pill status-running">${escapeHtml(tr("进行中", "In Progress"))}</span>`;
   }
   if (!target.uninstall_supported) {
     return `
-      <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">View Scope</button>
-      <span class="panel-meta">${escapeHtml(target.unsupported_reason || "Blocked")}</span>
+      <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("查看范围", "View Scope"))}</button>
+      <span class="panel-meta">${escapeHtml(buildTargetActionHint(target))}</span>
     `;
   }
   return `
-    <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">View Scope</button>
-    <button class="action-btn danger" type="button" data-uninstall-action="launch" data-target-id="${escapeHtml(target.id)}">Uninstall</button>
+    <button class="action-btn ghost" type="button" data-uninstall-action="scope" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("查看范围", "View Scope"))}</button>
+    <button class="action-btn danger" type="button" data-uninstall-action="launch" data-target-id="${escapeHtml(target.id)}">${escapeHtml(tr("一键卸载", "Uninstall"))}</button>
   `;
 }
 
@@ -996,28 +1956,28 @@ function renderEvidencePanel(job) {
   const check = getSelectedCheck(job);
 
   if (!check) {
-    meta.textContent = "No finding selected";
-    title.textContent = "Select a finding to inspect evidence details.";
-    summary.textContent = "Evidence samples and uninstall scope will appear here.";
-    viewer.textContent = "No evidence available.";
+    meta.textContent = tr("尚未选择发现项", "No finding selected");
+    title.textContent = tr("选择任意发现项以查看证据细节。", "Select a finding to inspect evidence details.");
+    summary.textContent = tr("证据样本和卸载范围会显示在这里。", "Evidence samples and uninstall scope will appear here.");
+    viewer.textContent = tr("暂无证据可展示。", "No evidence available.");
     return;
   }
 
   const relatedTargets = getRelatedTargets(check.id);
   const remediation = markRelatedFindingsHandled(check.id);
   const targetSummary = relatedTargets.length
-    ? `Linked targets: ${relatedTargets.map((target) => target.display_name || target.name).join(", ")}`
-    : "No removable target was inferred from this finding.";
+    ? tr(`关联目标：${relatedTargets.map((target) => target.display_name || target.name).join("、")}`, `Linked targets: ${relatedTargets.map((target) => target.display_name || target.name).join(", ")}`)
+    : tr("这个发现项没有推导出可处置目标。", "No removable target was inferred from this finding.");
   const remediationText = remediation.label
-    ? ` Current remediation state: ${remediation.label}.`
+    ? tr(` 当前处置状态：${remediation.label}。`, ` Current remediation state: ${remediation.label}.`)
     : "";
 
-  meta.textContent = `${safeText(check.domain_name, humanizeSlug(check.domain))} / Risk ${check.risk_score} / Confidence ${formatPercent(check.confidence)}`;
+  meta.textContent = tr(`${getCheckDomainLabel(check)} / 风险 ${check.risk_score} / 置信度 ${formatPercent(check.confidence)}`, `${getCheckDomainLabel(check)} / Risk ${check.risk_score} / Confidence ${formatPercent(check.confidence)}`);
   title.textContent = `${displayCheckTitle(check)} (${check.id})`;
   summary.textContent = `${displayCheckDescription(check)} ${targetSummary}${remediationText}`;
   viewer.textContent = (check.evidence && check.evidence.length)
     ? JSON.stringify(check.evidence, null, 2)
-    : "This finding did not return evidence samples.";
+    : tr("这个发现项没有返回证据样本。", "This finding did not return evidence samples.");
 }
 
 function renderUninstallPanel() {
@@ -1030,21 +1990,19 @@ function renderUninstallPanel() {
   const task = state.uninstallTask;
 
   if (!task) {
-    meta.textContent = "No uninstall task in progress";
-    title.textContent = "Select a removable target from Findings or Recommended Actions.";
-    summary.textContent = "The uninstall runner uses a background task and reports progress, steps, and logs here.";
+    meta.textContent = tr("当前没有进行中的卸载任务", "No uninstall task in progress");
+    title.textContent = tr("从发现项或建议动作中选择一个可处置目标。", "Select a removable target from Findings or Recommended Actions.");
+    summary.textContent = tr("卸载执行器会在这里持续显示后台任务进度、步骤和日志。", "The uninstall runner uses a background task and reports progress, steps, and logs here.");
     bar.style.width = "0%";
-    steps.innerHTML = buildEmptyCard("Removal steps will appear after an uninstall task starts.");
-    logs.innerHTML = buildEmptyCard("Task logs will stream here once execution begins.");
+    steps.innerHTML = buildEmptyCard(tr("卸载任务启动后，这里会显示步骤。", "Removal steps will appear after an uninstall task starts."));
+    logs.innerHTML = buildEmptyCard(tr("任务开始执行后，这里会持续显示日志。", "Task logs will stream here once execution begins."));
     return;
   }
 
-  meta.textContent = `${TASK_STATUS_LABELS[task.status] || task.status} / ${formatDate(task.updated_at)}`;
-  title.textContent = `${task.target_name} (${task.target_type})`;
+  meta.textContent = `${getTaskStatusLabel(task.status)} / ${formatDate(task.updated_at)}`;
+  title.textContent = `${task.target_name} (${task.target_type ? getTargetTypeLabel(task.target_type) : "--"})`;
   const durationText = task.duration_ms ? ` / ${formatDuration(task.duration_ms)}` : "";
-  summary.textContent = task.result?.summary
-    ? `${task.result.summary}${durationText}`
-    : `${task.current_step || "Task created, waiting for execution."}${durationText}`;
+  summary.textContent = `${buildTaskSummaryText(task)}${durationText}`;
   bar.style.width = `${task.progress || 0}%`;
 
   steps.innerHTML = (task.steps || []).map((step) => {
@@ -1059,22 +2017,22 @@ function renderUninstallPanel() {
       <div class="${classes.join(" ")}">
         <strong>${escapeHtml(String(step.index).padStart(2, "0"))}</strong>
         <div>
-          <span>${escapeHtml(step.label)}</span>
-          <small>${escapeHtml(step.status)}${step.duration_ms ? ` / ${escapeHtml(formatDuration(step.duration_ms))}` : ""}</small>
+          <span>${escapeHtml(getUninstallStepLabel(step.label || ""))}</span>
+          <small>${escapeHtml(getStepStatusLabel(step.status))}${step.duration_ms ? ` / ${escapeHtml(formatDuration(step.duration_ms))}` : ""}</small>
         </div>
       </div>
     `;
-  }).join("") || buildEmptyCard("No steps available.");
+  }).join("") || buildEmptyCard(tr("暂无可显示的步骤。", "No steps available."));
 
   logs.innerHTML = (task.logs && task.logs.length)
     ? task.logs.slice().reverse().map((entry) => `
         <div class="log-item log-${escapeHtml(entry.level || "info")}">
           <span>${escapeHtml(formatDate(entry.at))}</span>
-          <strong>${escapeHtml(entry.level || "info")}</strong>
-          <p>${escapeHtml(entry.message || "")}</p>
+          <strong>${escapeHtml(getLogLevelLabel(entry.level || "info"))}</strong>
+          <p>${escapeHtml(translateLogMessage(entry.message || ""))}</p>
         </div>
       `).join("")
-    : buildEmptyCard("No task logs yet.");
+    : buildEmptyCard(tr("还没有任务日志。", "No task logs yet."));
 }
 
 function renderUninstallResult() {
@@ -1084,44 +2042,50 @@ function renderUninstallResult() {
   const result = state.uninstallResult || (isTerminalTask(state.uninstallTask) ? state.uninstallTask : null);
 
   if (!result) {
-    meta.textContent = "No uninstall result selected";
-    summary.textContent = "Removed, preserved, and leftover items will appear here after a task finishes.";
-    viewer.innerHTML = buildEmptyCard("No completed uninstall result yet.");
+    meta.textContent = tr("尚未选择卸载结果", "No uninstall result selected");
+    summary.textContent = tr("任务完成后，这里会显示已删除、已保留和残留项。", "Removed, preserved, and leftover items will appear here after a task finishes.");
+    viewer.innerHTML = buildEmptyCard(tr("还没有已完成的卸载结果。", "No completed uninstall result yet."));
     return;
   }
 
   const removed = result.removed_items || [];
   const preserved = result.preserved_items || [];
   const leftovers = result.leftover_items || [];
-  const blockedReasons = result.result?.blocked_reasons || [];
-  const manualSteps = result.result?.manual_steps || [];
-  meta.textContent = `${TASK_STATUS_LABELS[result.status] || result.status} / ${formatDate(result.finished_at || result.updated_at)}${result.duration_ms ? ` / ${formatDuration(result.duration_ms)}` : ""}`;
+  const blockedReasons = (result.result?.blocked_reasons || []).map((item) => translateAuditText(item));
+  const manualSteps = (result.result?.manual_steps || []).map((item) => translateManualStep(item));
+  const resultTarget = {
+    ...(result.result || {}),
+    name: result.target_name || result.result?.name,
+    display_name: result.target_name || result.result?.display_name,
+    support_level: result.result?.support_level || result.support_level,
+  };
+  meta.textContent = `${getTaskStatusLabel(result.status)} / ${formatDate(result.finished_at || result.updated_at)}${result.duration_ms ? ` / ${formatDuration(result.duration_ms)}` : ""}`;
   const manualReview = result.result?.manual_review_required || preserved.length > 0 || leftovers.length > 0 || blockedReasons.length > 0;
   summary.textContent = manualReview
-    ? `${removed.length} removed, ${preserved.length} preserved, ${leftovers.length} leftover. Manual review required.`
-    : `${removed.length} removed, ${preserved.length} preserved, ${leftovers.length} leftover.`;
+    ? tr(`已删除 ${removed.length} 项，已保留 ${preserved.length} 项，残留 ${leftovers.length} 项。需要人工复核。`, `${removed.length} removed, ${preserved.length} preserved, ${leftovers.length} leftover. Manual review required.`)
+    : tr(`已删除 ${removed.length} 项，已保留 ${preserved.length} 项，残留 ${leftovers.length} 项。`, `${removed.length} removed, ${preserved.length} preserved, ${leftovers.length} leftover.`);
 
   viewer.innerHTML = [
     buildResultMetrics(result),
-    manualReview ? `<div class="result-banner">${escapeHtml(result.result?.summary || "Manual review required for preserved or leftover footprint.")}</div>` : "",
-    result.result?.target_summary ? `<div class="result-note">${escapeHtml(result.result.target_summary)}</div>` : "",
-    result.result?.rationale ? `<div class="result-note">${escapeHtml(result.result.rationale)}</div>` : "",
-    buildStringResultGroup("Blocked Reasons", blockedReasons),
-    buildStringResultGroup("Manual Steps", manualSteps),
+    manualReview ? `<div class="result-banner">${escapeHtml(buildTaskSummaryText(result))}</div>` : "",
+    result.result?.target_summary ? `<div class="result-note">${escapeHtml(buildTargetSummaryText(resultTarget))}</div>` : "",
+    result.result?.rationale ? `<div class="result-note">${escapeHtml(buildTargetReasonText(resultTarget))}</div>` : "",
+    buildStringResultGroup(tr("阻断原因", "Blocked Reasons"), blockedReasons),
+    buildStringResultGroup(tr("人工步骤", "Manual Steps"), manualSteps),
     buildStepHistoryGroup(result.step_history || []),
-    buildResultGroup("Removed", removed),
-    buildResultGroup("Preserved", preserved),
-    buildResultGroup("Leftovers", leftovers),
+    buildResultGroup(tr("已删除", "Removed"), removed),
+    buildResultGroup(tr("已保留", "Preserved"), preserved),
+    buildResultGroup(tr("残留", "Leftovers"), leftovers),
     buildLogDetails(result.logs || []),
   ].join("");
 }
 
 function buildResultMetrics(result) {
   const stats = [
-    ["Duration", formatDuration(result.duration_ms)],
-    ["Removed", String((result.removed_items || []).length)],
-    ["Preserved", String((result.preserved_items || []).length)],
-    ["Leftover", String((result.leftover_items || []).length)],
+    [tr("耗时", "Duration"), formatDuration(result.duration_ms)],
+    [tr("已删除", "Removed"), String((result.removed_items || []).length)],
+    [tr("已保留", "Preserved"), String((result.preserved_items || []).length)],
+    [tr("残留", "Leftover"), String((result.leftover_items || []).length)],
   ];
   return `
     <div class="result-metric-grid">
@@ -1143,11 +2107,11 @@ function buildStringResultGroup(title, items) {
     <div class="result-group">
       <div class="subsection-head">
         <strong>${escapeHtml(title)}</strong>
-        <span class="panel-meta">${escapeHtml(String(items.length))} item(s)</span>
+        <span class="panel-meta">${escapeHtml(tr(`${String(items.length)} 项`, `${String(items.length)} item(s)`))}</span>
       </div>
       ${items.map((item) => `
         <div class="result-item result-item-note">
-          <strong>${escapeHtml(title.slice(0, -1) || "Item")}</strong>
+          <strong>${escapeHtml(title)}</strong>
           <p>${escapeHtml(String(item || "--"))}</p>
         </div>
       `).join("")}
@@ -1162,13 +2126,13 @@ function buildStepHistoryGroup(stepHistory) {
   return `
     <div class="result-group">
       <div class="subsection-head">
-        <strong>Step History</strong>
-        <span class="panel-meta">${escapeHtml(String(stepHistory.length))} step(s)</span>
+        <strong>${escapeHtml(tr("步骤回放", "Step History"))}</strong>
+        <span class="panel-meta">${escapeHtml(tr(`${String(stepHistory.length)} 步`, `${String(stepHistory.length)} step(s)`))}</span>
       </div>
       ${stepHistory.map((step) => `
         <div class="result-item result-item-note">
-          <strong>${escapeHtml(String(step.index).padStart(2, "0"))} / ${escapeHtml(step.label || "--")}</strong>
-          <span>${escapeHtml((step.status || "unknown").toUpperCase())}${step.duration_ms ? ` / ${escapeHtml(formatDuration(step.duration_ms))}` : ""}</span>
+          <strong>${escapeHtml(String(step.index).padStart(2, "0"))} / ${escapeHtml(getUninstallStepLabel(step.label || ""))}</strong>
+          <span>${escapeHtml(getStepStatusLabel(step.status || "unknown"))}${step.duration_ms ? ` / ${escapeHtml(formatDuration(step.duration_ms))}` : ""}</span>
           <p>${escapeHtml(`${formatDate(step.started_at)} -> ${formatDate(step.finished_at)}`)}</p>
         </div>
       `).join("")}
@@ -1182,13 +2146,13 @@ function buildLogDetails(logs) {
   }
   return `
     <details class="result-details">
-      <summary>Execution logs</summary>
+      <summary>${escapeHtml(tr("执行日志", "Execution logs"))}</summary>
       <div class="log-list">
         ${logs.slice().reverse().map((entry) => `
           <div class="log-item log-${escapeHtml(entry.level || "info")}">
             <span>${escapeHtml(formatDate(entry.at))}</span>
-            <strong>${escapeHtml(entry.level || "info")}</strong>
-            <p>${escapeHtml(entry.message || "")}</p>
+            <strong>${escapeHtml(getLogLevelLabel(entry.level || "info"))}</strong>
+            <p>${escapeHtml(translateLogMessage(entry.message || ""))}</p>
           </div>
         `).join("")}
       </div>
@@ -1202,9 +2166,9 @@ function buildResultGroup(title, items) {
       <div class="result-group">
         <div class="subsection-head">
           <strong>${escapeHtml(title)}</strong>
-          <span class="panel-meta">0 item</span>
+          <span class="panel-meta">${escapeHtml(tr("0 项", "0 item"))}</span>
         </div>
-        ${buildEmptyCard(`No ${title.toLowerCase()} recorded.`)}
+        ${buildEmptyCard(tr(`没有记录到${title}。`, `No ${title.toLowerCase()} recorded.`))}
       </div>
     `;
   }
@@ -1212,13 +2176,13 @@ function buildResultGroup(title, items) {
     <div class="result-group">
       <div class="subsection-head">
         <strong>${escapeHtml(title)}</strong>
-        <span class="panel-meta">${escapeHtml(String(items.length))} item(s)</span>
+        <span class="panel-meta">${escapeHtml(tr(`${String(items.length)} 项`, `${String(items.length)} item(s)`))}</span>
       </div>
       ${items.map((item) => `
         <div class="result-item">
-          <strong>${escapeHtml(item.type || "item")}</strong>
+          <strong>${escapeHtml(getResultItemTypeLabel(item.type || "item"))}</strong>
           <span>${escapeHtml(item.value || item.label || "--")}</span>
-          <p>${escapeHtml(item.detail || item.reason || "--")}</p>
+          <p>${escapeHtml(translateAuditText(item.detail || item.reason || "--"))}</p>
         </div>
       `).join("")}
     </div>
@@ -1230,11 +2194,11 @@ function syncButtonState() {
   const button = document.getElementById("startScanBtn");
   if (PUBLIC_SITE_MODE) {
     button.disabled = !hasDownloadAsset();
-    button.textContent = hasDownloadAsset() ? "Download Windows Client" : "Release Package Missing";
+    button.textContent = hasDownloadAsset() ? tr("下载 Windows 客户端", "Download Windows Client") : tr("发布包缺失", "Release Package Missing");
     return;
   }
   button.disabled = Boolean(running);
-  button.textContent = running ? "Scan Running" : "Start Real Scan";
+  button.textContent = running ? tr("扫描进行中", "Scan Running") : tr("开始真实扫描", "Start Real Scan");
 }
 
 function renderEmptyState() {
@@ -1258,14 +2222,14 @@ function renderEmptyState() {
 
 function renderPublicSiteMode() {
   document.title = hasDownloadAsset()
-    ? "Police Claw Windows Client Download"
-    : "Police Claw Release Package Pending";
+    ? tr("Police Claw Windows 客户端下载", "Police Claw Windows Client Download")
+    : tr("Police Claw 发布包待就绪", "Police Claw Release Package Pending");
   setGlobalNotice(
     hasDownloadAsset() ? "info" : "warn",
-    hasDownloadAsset() ? "Download the Windows client" : "Installer package not available",
+    hasDownloadAsset() ? tr("下载 Windows 客户端", "Download the Windows client") : tr("安装包暂不可用", "Installer package not available"),
     hasDownloadAsset()
-      ? "The hosted site distributes the installer directly. Real scan and uninstall actions still run locally after the client is installed."
-      : "Build dist/release/PoliceClaw-Setup-<version>.exe to enable direct website downloads."
+      ? tr("当前站点直接分发安装包。真实扫描和卸载仍然只会在客户端安装后于本机执行。", "The hosted site distributes the installer directly. Real scan and uninstall actions still run locally after the client is installed.")
+      : tr("请先构建 dist/release/PoliceClaw-Setup-<version>.exe，网站下载入口才会生效。", "Build dist/release/PoliceClaw-Setup-<version>.exe to enable direct website downloads.")
   );
   renderExecutiveSummary(null);
   renderDownloadPanel();
@@ -1281,7 +2245,7 @@ function renderGlobalNotice() {
   }
   node.className = `inline-notice notice-${escapeHtml(notice.tone || "info")}`;
   node.innerHTML = `
-    <strong>${escapeHtml(notice.title || "Notice")}</strong>
+    <strong>${escapeHtml(notice.title || tr("提示", "Notice"))}</strong>
     <p>${escapeHtml(notice.message || "")}</p>
   `;
 }
@@ -1289,7 +2253,7 @@ function renderGlobalNotice() {
 function setGlobalNotice(tone, title, message) {
   state.notice = {
     tone: tone || "info",
-    title: title || "Notice",
+    title: title || tr("提示", "Notice"),
     message: message || "",
   };
   renderGlobalNotice();
@@ -1300,7 +2264,7 @@ function clearGlobalNotice() {
   renderGlobalNotice();
 }
 
-function renderGlobalError(message, title = "Workbench Error") {
+function renderGlobalError(message, title = tr("工作台错误", "Workbench Error")) {
   setGlobalNotice("error", title, message);
 }
 
@@ -1431,7 +2395,7 @@ function openUninstallModal(targetId) {
     remove_config: Boolean(target.config_paths?.length),
     remove_binary: Boolean(target.remove_binary_allowed),
     confirmation_text: "",
-    error: target.uninstall_supported ? "" : (target.unsupported_reason || "Target is not safe to uninstall."),
+    error: target.uninstall_supported ? "" : (target.unsupported_reason || tr("这个目标当前不适合自动卸载。", "Target is not safe to uninstall.")),
   };
   renderModal();
 }
@@ -1475,13 +2439,13 @@ function renderModal() {
   modal.classList.toggle("is-hidden", !state.uninstallModalState.open);
   modal.setAttribute("aria-hidden", String(!state.uninstallModalState.open));
 
-  document.getElementById("uninstallModalTarget").textContent = target?.name || "--";
+  document.getElementById("uninstallModalTarget").textContent = target ? getTargetName(target) : "--";
   document.getElementById("uninstallModalRisk").textContent = target
-    ? `${target.risk_level} / ${target.risk_score} / ${target.matched_findings_count} matched findings / ${formatPercent(target.confidence || 0)} confidence`
-    : "Risk --";
+    ? tr(`${getRiskLevelLabel(target.risk_level)} / ${target.risk_score} / 命中 ${target.matched_findings_count} 条发现 / 置信度 ${formatPercent(target.confidence || 0)}`, `${getRiskLevelLabel(target.risk_level)} / ${target.risk_score} / ${target.matched_findings_count} matched findings / ${formatPercent(target.confidence || 0)} confidence`)
+    : tr("风险 --", "Risk --");
   document.getElementById("uninstallModalReason").textContent = target?.uninstall_supported
-    ? `${target.target_summary || target.evidence_summary || "The backend validates every path again before any file operation happens."}`
-    : (target?.unsupported_reason || target?.rationale || "Select a target to review scope.");
+    ? buildTargetActionHint(target)
+    : (target ? buildBlockedReasonDetail(target.blocked_reason_code) : tr("请选择一个目标查看处置范围。", "Select a target to review scope."));
 
   document.getElementById("uninstallMode").value = state.uninstallModalState.mode;
   document.getElementById("removeStartupToggle").checked = Boolean(state.uninstallModalState.remove_startup);
@@ -1493,7 +2457,7 @@ function renderModal() {
 
   document.getElementById("uninstallScopeList").innerHTML = target
     ? buildTargetScopeCards(target)
-    : buildEmptyCard("No target selected.");
+    : buildEmptyCard(tr("尚未选择目标。", "No target selected."));
 
   const canSubmit = Boolean(
     state.uninstallModalState.open &&
@@ -1508,40 +2472,40 @@ function renderModal() {
 function buildTargetScopeCards(target) {
   const cards = [
     {
-      title: "Disposition",
+      title: tr("处置策略", "Disposition"),
       count: target.planned_actions?.length || 0,
       body: target.planned_actions?.length
-        ? `${target.planned_actions.join(" | ")}${target.rationale ? ` | ${target.rationale}` : ""}`
-        : (target.rationale || target.unsupported_reason || "No executable scope was inferred."),
+        ? `${target.planned_actions.map((action) => getPlannedActionLabel(action)).join(" | ")} | ${buildTargetReasonText(target)}`
+        : buildTargetReasonText(target),
     },
     {
-      title: "Terminate processes",
+      title: tr("终止进程", "Terminate processes"),
       count: target.pids?.length || 0,
-      body: target.pids?.length ? target.pids.join(", ") : "No linked active process.",
+      body: target.pids?.length ? target.pids.join(", ") : tr("没有关联的活动进程。", "No linked active process."),
     },
     {
-      title: "Remove startup entries",
+      title: tr("移除启动项", "Remove startup entries"),
       count: target.startup_entries?.length || 0,
       body: target.startup_entries?.length
-        ? target.startup_entries.map((entry) => `${entry.kind}: ${entry.label}`).join(" | ")
-        : "No user-level persistence discovered.",
+        ? target.startup_entries.map((entry) => `${getStartupKindLabel(entry.kind)}: ${entry.label}`).join(" | ")
+        : tr("没有发现用户级持久化项。", "No user-level persistence discovered."),
     },
     {
-      title: "Remove config",
+      title: tr("移除配置", "Remove config"),
       count: target.config_paths?.length || 0,
-      body: target.config_paths?.length ? target.config_paths.join(" | ") : "No explicit config path.",
+      body: target.config_paths?.length ? target.config_paths.join(" | ") : tr("没有明确的配置路径。", "No explicit config path."),
     },
     {
-      title: "Remove cache",
+      title: tr("移除缓存", "Remove cache"),
       count: target.cache_paths?.length || 0,
-      body: target.cache_paths?.length ? target.cache_paths.join(" | ") : "No explicit cache path.",
+      body: target.cache_paths?.length ? target.cache_paths.join(" | ") : tr("没有明确的缓存路径。", "No explicit cache path."),
     },
     {
-      title: "Remove binaries",
+      title: tr("移除程序文件", "Remove binaries"),
       count: target.executable_paths?.length || 0,
       body: target.remove_binary_allowed
-        ? (target.executable_paths?.length ? target.executable_paths.join(" | ") : "No explicit binary file.")
-        : (target.remove_binary_reason || "Binary path will be preserved for manual review."),
+        ? (target.executable_paths?.length ? target.executable_paths.join(" | ") : tr("没有明确的程序文件。", "No explicit binary file."))
+        : (target.remove_binary_reason || tr("程序路径会保留给人工复核。", "Binary path will be preserved for manual review.")),
     },
   ];
 
@@ -1550,7 +2514,7 @@ function buildTargetScopeCards(target) {
       <div class="target-card-head">
         <div>
           <strong>${escapeHtml(card.title)}</strong>
-          <span>${escapeHtml(String(card.count))} item(s)</span>
+          <span>${escapeHtml(tr(`${String(card.count)} 项`, `${String(card.count)} item(s)`))}</span>
         </div>
       </div>
       <div class="target-card-body">
@@ -1566,7 +2530,7 @@ async function submitUninstall() {
     return;
   }
   if (state.uninstallModalState.confirmation_text !== UNINSTALL_CONFIRMATION_TEXT) {
-    state.uninstallModalState.error = "Confirmation text does not match.";
+    state.uninstallModalState.error = tr("确认文本不匹配。", "Confirmation text does not match.");
     renderModal();
     return;
   }
@@ -1589,7 +2553,7 @@ async function submitUninstall() {
           confirmation_text: state.uninstallModalState.confirmation_text,
         }),
       },
-      "Unable to create the uninstall task.",
+      tr("无法创建卸载任务。", "Unable to create the uninstall task."),
     );
     closeUninstallModal();
     state.uninstallTask = task;
@@ -1599,7 +2563,7 @@ async function submitUninstall() {
     await Promise.all([loadUninstallHistory(), fetchUninstallTargets(getRequestedUninstallJobId(state.currentJob))]);
   } catch (error) {
     state.uninstallModalState.error = error.message;
-    renderGlobalError(error.message, "Uninstall request failed");
+    renderGlobalError(error.message, tr("卸载请求失败", "Uninstall request failed"));
     renderModal();
   }
 }
@@ -1649,8 +2613,11 @@ function applyFindingFilters(checks) {
       check.id,
       check.label,
       check.description,
+      displayCheckTitle(check),
+      displayCheckDescription(check),
       check.domain,
       check.domain_name,
+      getCheckDomainLabel(check),
     ];
     const matchesSearch = !state.filters.search || searchFields.some((field) =>
       String(field || "").toLowerCase().includes(state.filters.search.toLowerCase())
@@ -1670,11 +2637,11 @@ function applyFindingFilters(checks) {
       return (right.evidence_count || 0) - (left.evidence_count || 0) || right.risk_score - left.risk_score;
     }
     if (state.filters.sort === "domain") {
-      return String(left.domain_name).localeCompare(String(right.domain_name), "zh-CN") ||
+      return getCheckDomainLabel(left).localeCompare(getCheckDomainLabel(right), getLanguageLocale()) ||
         right.risk_score - left.risk_score;
     }
     if (state.filters.sort === "name") {
-      return displayCheckTitle(left).localeCompare(displayCheckTitle(right), "zh-CN");
+      return displayCheckTitle(left).localeCompare(displayCheckTitle(right), getLanguageLocale());
     }
     return right.risk_score - left.risk_score || (right.evidence_count || 0) - (left.evidence_count || 0);
   });
@@ -1683,8 +2650,8 @@ function applyFindingFilters(checks) {
 function syncDomainFilterOptions(domains) {
   const select = document.getElementById("domainFilter");
   const current = state.filters.domain;
-  const options = ['<option value="all">All Domains</option>'].concat(
-    domains.map((domain) => `<option value="${domain.id}">${escapeHtml(safeText(domain.name, humanizeSlug(domain.id)))}</option>`)
+  const options = [`<option value="all">${escapeHtml(tr("全部安全域", "All Domains"))}</option>`].concat(
+    domains.map((domain) => `<option value="${domain.id}">${escapeHtml(getDomainLabel(domain.id, domain.name))}</option>`)
   );
   select.innerHTML = options.join("");
   select.value = domains.some((domain) => domain.id === current) || current === "all" ? current : "all";
@@ -1696,6 +2663,7 @@ function getDomainEntries(report) {
   return Object.entries(report.summary.domain_summary || {}).map(([id, summary]) => ({
     id,
     ...summary,
+    name: getDomainLabel(id, summary.name),
     checks: checks.filter((check) => check.domain === id),
   }));
 }
@@ -1715,15 +2683,15 @@ function getPosture(report) {
 
   if (autoRemediableTargets.length && handledTargets.length === autoRemediableTargets.length && !blockedHighRisk.length && !manualReviewTargets.length) {
     return {
-      label: "Remediated",
-      headline: "All currently supported high-risk targets have completed uninstall handling.",
+      label: tr("已处置", "Remediated"),
+      headline: tr("当前所有可直接处置的高风险目标都已完成卸载处理。", "All currently supported high-risk targets have completed uninstall handling."),
       badgeClass: "badge-good",
     };
   }
   if (autoRemediableTargets.length && handledTargets.length === autoRemediableTargets.length && (blockedHighRisk.length || manualReviewTargets.length)) {
     return {
-      label: "Manual Review",
-      headline: "Auto-remediation is complete, but residual review or blocked targets still need manual follow-up.",
+      label: tr("待人工复核", "Manual Review"),
+      headline: tr("自动处置已经完成，但残留复核或受限目标仍需要人工跟进。", "Auto-remediation is complete, but residual review or blocked targets still need manual follow-up."),
       badgeClass: "badge-warn",
     };
   }
@@ -1732,28 +2700,28 @@ function getPosture(report) {
   const maxRisk = report.summary?.max_risk_score || 0;
   if (totalRisks === 0) {
     return {
-      label: "Stable",
-      headline: "No high-confidence risk hotspots were detected in the latest report.",
+      label: tr("稳定", "Stable"),
+      headline: tr("最新报告中没有发现高置信度风险热点。", "No high-confidence risk hotspots were detected in the latest report."),
       badgeClass: "badge-good",
     };
   }
   if (totalRisks <= 6 && maxRisk < 70) {
     return {
-      label: "Contained",
-      headline: "A small number of findings remain, but the overall posture is controlled.",
+      label: tr("可控", "Contained"),
+      headline: tr("仍有少量发现项，但整体态势处于可控范围。", "A small number of findings remain, but the overall posture is controlled."),
       badgeClass: "badge-warn",
     };
   }
   if (totalRisks <= 12) {
     return {
-      label: "Escalated",
-      headline: "Risk exposure is concentrated enough to require formal review and action.",
+      label: tr("升级关注", "Escalated"),
+      headline: tr("风险集中程度已经需要正式复核和处置。", "Risk exposure is concentrated enough to require formal review and action."),
       badgeClass: "badge-warn",
     };
   }
   return {
-    label: "High Pressure",
-    headline: "The latest report shows a dense concentration of high-risk findings.",
+    label: tr("高压态势", "High Pressure"),
+    headline: tr("最新报告显示高风险发现项高度集中。", "The latest report shows a dense concentration of high-risk findings."),
     badgeClass: "badge-risk",
   };
 }
@@ -1765,14 +2733,17 @@ function buildNarrative(report) {
   const activeSignals = report.runtime?.result_overview?.active_signals ?? "--";
   const visibleTargets = getRenderableUninstallTargets();
   const targetLine = visibleTargets.length
-    ? ` The backend inferred ${visibleTargets.length} uninstall target(s) for this report.`
+    ? tr(` 后端为这份报告推导出了 ${visibleTargets.length} 个可处置目标。`, ` The backend inferred ${visibleTargets.length} uninstall target(s) for this report.`)
     : state.uninstallTargets.length && state.uninstallSourceScanId
-      ? ` Uninstall targets are currently sourced from completed scan ${state.uninstallSourceScanId}.`
+      ? tr(` 当前卸载目标来自已完成的扫描 ${state.uninstallSourceScanId}。`, ` Uninstall targets are currently sourced from completed scan ${state.uninstallSourceScanId}.`)
     : "";
   if (!topDomain) {
-    return `The scan covered ${report.summary.total_checks} checks and did not form a material risk cluster.${targetLine}`;
+    return tr(`本次扫描覆盖 ${report.summary.total_checks} 个检查项，未形成明显风险聚类。${targetLine}`, `The scan covered ${report.summary.total_checks} checks and did not form a material risk cluster.${targetLine}`);
   }
-  return `The latest scan ran on ${report.host} at ${report.timestamp}. It covered ${report.summary.total_checks} checks, flagged ${report.summary.total_risks} findings, and activated ${activeSignals} runtime signals. The hottest domain is ${safeText(topDomain.name, humanizeSlug(topDomain.id))} with ${topDomain.risks} flagged finding(s) and a peak score of ${topDomain.max_score}.${targetLine}`;
+  return tr(
+    `最近一次扫描于 ${report.timestamp} 在 ${report.host} 上运行，共覆盖 ${report.summary.total_checks} 个检查项，标记 ${report.summary.total_risks} 条风险发现，并触发 ${activeSignals} 个运行时信号。当前最热的安全域是 ${safeText(topDomain.name, humanizeSlug(topDomain.id))}，其中有 ${topDomain.risks} 条风险发现，峰值分数为 ${topDomain.max_score}。${targetLine}`,
+    `The latest scan ran on ${report.host} at ${report.timestamp}. It covered ${report.summary.total_checks} checks, flagged ${report.summary.total_risks} findings, and activated ${activeSignals} runtime signals. The hottest domain is ${safeText(topDomain.name, humanizeSlug(topDomain.id))} with ${topDomain.risks} flagged finding(s) and a peak score of ${topDomain.max_score}.${targetLine}`,
+  );
 }
 
 function buildRecommendations(report) {
@@ -1794,16 +2765,16 @@ function buildRecommendations(report) {
   if (!flaggedChecks.length) {
     return [
       {
-        tag: "Baseline",
+        tag: tr("基线", "Baseline"),
         tone: "neutral",
-        title: "Archive the baseline report",
-        body: "No significant findings remain. Keep the JSON or DOCX export as the current workstation baseline.",
+        title: tr("归档基线报告", "Archive the baseline report"),
+        body: tr("没有剩余的显著发现项。请保留 JSON 或 DOCX 导出作为当前工作站基线。", "No significant findings remain. Keep the JSON or DOCX export as the current workstation baseline."),
       },
       {
-        tag: "Cadence",
+        tag: tr("节奏", "Cadence"),
         tone: "neutral",
-        title: "Keep the cadence",
-        body: "Run the same scan flow again after meaningful environment or tooling changes.",
+        title: tr("保持复查频率", "Keep the cadence"),
+        body: tr("在环境或工具链发生明显变化后，重新执行同样的扫描流程。", "Run the same scan flow again after meaningful environment or tooling changes."),
       },
     ];
   }
@@ -1811,68 +2782,68 @@ function buildRecommendations(report) {
   const recommendations = [];
   if (autoRemediableTargets.length && handledTargets.length === autoRemediableTargets.length) {
     recommendations.push({
-      tag: blockedTargets.length || partialTargets.length ? "Review Remaining" : "Complete",
+      tag: blockedTargets.length || partialTargets.length ? tr("仍需复核", "Review Remaining") : tr("已完成", "Complete"),
       tone: blockedTargets.length || partialTargets.length ? "warn" : "good",
-      title: "High-priority remediation is complete",
+      title: tr("高优先级处置已完成", "High-priority remediation is complete"),
       body: blockedTargets.length || partialTargets.length
-        ? "All directly supported targets were processed. Review residual items and blocked targets before closing the report."
-        : "All currently supported removable targets for this report have been handled. Review residual notes and export the audit trail.",
+        ? tr("所有可直接支持的目标都已处理。关闭报告前，请复核残留项和受限目标。", "All directly supported targets were processed. Review residual items and blocked targets before closing the report.")
+        : tr("这份报告中当前所有支持自动处置的目标都已处理完成。请复核残留说明并导出审计记录。", "All currently supported removable targets for this report have been handled. Review residual notes and export the audit trail."),
     });
   }
   if (urgentTargets[0]) {
     recommendations.push({
-      tag: "Urgent uninstall",
+      tag: tr("优先卸载", "Urgent uninstall"),
       tone: "risk",
-      title: `Review ${urgentTargets[0].display_name || urgentTargets[0].name} first`,
-      body: urgentTargets[0].target_summary || `This target is the highest-priority removable footprint with a risk score of ${urgentTargets[0].risk_score} and ${formatPercent(urgentTargets[0].confidence || 0)} confidence.`,
+      title: tr(`优先处置 ${getTargetName(urgentTargets[0])}`, `Review ${getTargetName(urgentTargets[0])} first`),
+      body: buildTargetSummaryText(urgentTargets[0]),
     });
   }
   if (cleanupTargets[0]) {
     recommendations.push({
-      tag: "Cleanup available",
+      tag: tr("可清理", "Cleanup available"),
       tone: "warn",
-      title: `Clean residual footprint for ${cleanupTargets[0].display_name || cleanupTargets[0].name}`,
-      body: cleanupTargets[0].rationale || "The runner can remove persistence, config, and cache, but the binary path remains protected.",
+      title: tr(`清理 ${getTargetName(cleanupTargets[0])} 的残留`, `Clean residual footprint for ${getTargetName(cleanupTargets[0])}`),
+      body: buildTargetReasonText(cleanupTargets[0]),
     });
   }
   if (terminateTargets[0]) {
     recommendations.push({
-      tag: "Terminate only",
+      tag: tr("仅遏制", "Terminate only"),
       tone: "neutral",
-      title: `Contain ${terminateTargets[0].display_name || terminateTargets[0].name}`,
-      body: terminateTargets[0].rationale || "Only the active process can be safely terminated with the current footprint.",
+      title: tr(`遏制 ${getTargetName(terminateTargets[0])}`, `Contain ${getTargetName(terminateTargets[0])}`),
+      body: buildTargetReasonText(terminateTargets[0]),
     });
   }
   if (partialTargets[0]) {
     recommendations.push({
-      tag: "Manual review",
+      tag: tr("人工复核", "Manual review"),
       tone: "warn",
-      title: `Finish manual review for ${partialTargets[0].display_name || partialTargets[0].name}`,
-      body: "A previous uninstall run preserved or left behind some items. Review the residual panel before rerunning anything.",
+      title: tr(`完成 ${partialTargets[0].display_name || partialTargets[0].name} 的人工复核`, `Finish manual review for ${partialTargets[0].display_name || partialTargets[0].name}`),
+      body: tr("之前的卸载执行保留或遗留了部分项目。再次运行前，请先检查残留复核面板。", "A previous uninstall run preserved or left behind some items. Review the residual panel before rerunning anything."),
     });
   }
   if (blockedTargets[0]) {
     recommendations.push({
-      tag: "Blocked",
+      tag: tr("受限", "Blocked"),
       tone: "risk",
-      title: `Review blocked target ${blockedTargets[0].display_name || blockedTargets[0].name}`,
-      body: blockedTargets[0].unsupported_reason || blockedTargets[0].rationale || "The inferred target is real enough to review, but not safe enough to auto-remove.",
+      title: tr(`复核受限目标 ${getTargetName(blockedTargets[0])}`, `Review blocked target ${getTargetName(blockedTargets[0])}`),
+      body: buildTargetReasonText(blockedTargets[0]),
     });
   }
   if (flaggedChecks[0]) {
     recommendations.push({
-      tag: "Validate",
+      tag: tr("核验", "Validate"),
       tone: "neutral",
-      title: `Validate ${displayCheckTitle(flaggedChecks[0])}`,
-      body: "Start with the top finding, confirm the evidence, and then decide whether to use the uninstall flow or manual containment.",
+      title: tr(`核验 ${displayCheckTitle(flaggedChecks[0])}`, `Validate ${displayCheckTitle(flaggedChecks[0])}`),
+      body: tr("先从最高优先级的发现项开始，确认相关证据，再决定使用卸载流程还是人工遏制。", "Start with the top finding, confirm the evidence, and then decide whether to use the uninstall flow or manual containment."),
     });
   }
   if (!visibleTargets.length || urgentTargets.length || cleanupTargets.length || blockedTargets.length) {
     recommendations.push({
-      tag: "Audit",
+      tag: tr("审计", "Audit"),
       tone: "neutral",
-      title: "Export the report trail",
-      body: "Keep the JSON or DOCX report with the uninstall task logs so the containment path remains auditable.",
+      title: tr("导出处置链路", "Export the report trail"),
+      body: tr("请把 JSON 或 DOCX 报告与卸载任务日志一起保留，确保处置路径可审计。", "Keep the JSON or DOCX report with the uninstall task logs so the containment path remains auditable."),
     });
   }
   return recommendations.slice(0, 4);
@@ -1941,29 +2912,29 @@ function getRemediationStateForTarget(target) {
   if (task) {
     if (task.status === "success") {
       return target.support_level === "full"
-        ? { status: "removed", label: "Removed", detail: "Target uninstall completed." }
-        : { status: "mitigated", label: "Mitigated", detail: "Controlled cleanup or containment completed." };
+        ? { status: "removed", label: tr("已移除", "Removed"), detail: tr("目标卸载已经完成。", "Target uninstall completed.") }
+        : { status: "mitigated", label: tr("已缓解", "Mitigated"), detail: tr("受控清理或遏制已完成。", "Controlled cleanup or containment completed.") };
     }
     if (task.status === "partial") {
-      return { status: "partial", label: "Partial", detail: "Residual review is still required." };
+      return { status: "partial", label: tr("部分完成", "Partial"), detail: tr("仍然需要进行残留复核。", "Residual review is still required.") };
     }
     if (task.status === "failed") {
-      return { status: "manual-review", label: "Manual Review", detail: "The last uninstall run failed and needs review." };
+      return { status: "manual-review", label: tr("人工复核", "Manual Review"), detail: tr("最近一次卸载执行失败，需要人工复核。", "The last uninstall run failed and needs review.") };
     }
     if (["pending", "running"].includes(task.status)) {
-      return { status: "running", label: "In Progress", detail: "Removal task is currently active." };
+      return { status: "running", label: tr("进行中", "In Progress"), detail: tr("处置任务正在执行中。", "Removal task is currently active.") };
     }
   }
   if (target.resolved || state.removedTargetIds.has(target.id)) {
     return target.support_level === "full"
-      ? { status: "removed", label: "Removed", detail: "Linked target completed uninstall handling." }
-      : { status: "mitigated", label: "Mitigated", detail: "Linked target received controlled cleanup or containment." };
+      ? { status: "removed", label: tr("已移除", "Removed"), detail: tr("关联目标已经完成卸载处理。", "Linked target completed uninstall handling.") }
+      : { status: "mitigated", label: tr("已缓解", "Mitigated"), detail: tr("关联目标已经完成受控清理或遏制。", "Linked target received controlled cleanup or containment.") };
   }
   if (!target.uninstall_supported) {
     if (MANUAL_REVIEW_BLOCK_CODES.has(target.blocked_reason_code)) {
-      return { status: "manual-review", label: "Manual Review", detail: target.unsupported_reason || "Manual review is required." };
+      return { status: "manual-review", label: tr("人工复核", "Manual Review"), detail: buildBlockedReasonDetail(target.blocked_reason_code) };
     }
-    return { status: "blocked", label: "Blocked", detail: target.unsupported_reason || "Auto-removal is blocked." };
+    return { status: "blocked", label: tr("受限", "Blocked"), detail: buildBlockedReasonDetail(target.blocked_reason_code) };
   }
   return { status: "ready", label: "", detail: "" };
 }
@@ -2026,22 +2997,22 @@ function markRelatedFindingsHandled(checkId) {
   }
   const remediations = relatedTargets.map((target) => getRemediationStateForTarget(target));
   if (remediations.some((item) => item.status === "running")) {
-    return { status: "running", label: "In Progress", detail: "Removal task is currently active." };
+    return { status: "running", label: tr("进行中", "In Progress"), detail: tr("处置任务正在执行中。", "Removal task is currently active.") };
   }
   if (remediations.some((item) => item.status === "partial")) {
-    return { status: "partial", label: "Partial", detail: "A previous uninstall pass needs manual follow-up." };
+    return { status: "partial", label: tr("部分完成", "Partial"), detail: tr("之前的一次卸载执行仍需要人工跟进。", "A previous uninstall pass needs manual follow-up.") };
   }
   if (remediations.some((item) => item.status === "manual-review")) {
-    return { status: "manual-review", label: "Manual Review", detail: "Only manual follow-up remains for this finding." };
+    return { status: "manual-review", label: tr("人工复核", "Manual Review"), detail: tr("这个发现项只剩人工跟进。", "Only manual follow-up remains for this finding.") };
   }
   if (remediations.some((item) => item.status === "removed")) {
-    return { status: "removed", label: "Removed", detail: "Linked target completed uninstall handling." };
+    return { status: "removed", label: tr("已移除", "Removed"), detail: tr("关联目标已经完成卸载处理。", "Linked target completed uninstall handling.") };
   }
   if (remediations.some((item) => item.status === "mitigated")) {
-    return { status: "mitigated", label: "Mitigated", detail: "Linked target received controlled cleanup or containment." };
+    return { status: "mitigated", label: tr("已缓解", "Mitigated"), detail: tr("关联目标已经完成受控清理或遏制。", "Linked target received controlled cleanup or containment.") };
   }
   if (relatedTargets.every((target) => !target.uninstall_supported)) {
-    return { status: "blocked", label: "Blocked", detail: "Only blocked targets were inferred for this finding." };
+    return { status: "blocked", label: tr("受限", "Blocked"), detail: tr("这个发现项只推导出了受限目标。", "Only blocked targets were inferred for this finding.") };
   }
   return { status: "ready", label: "", detail: "" };
 }
@@ -2055,19 +3026,47 @@ function isTerminalTask(task) {
 }
 
 function displayCheckTitle(check) {
+  const entry = getCheckTranslation(check);
+  if (entry) {
+    return tr(entry.zhTitle, entry.enTitle);
+  }
   return safeText(check.label, humanizeSlug(check.id));
 }
 
 function displayCheckDescription(check) {
-  return safeText(check.description, `Check identifier: ${check.id}`);
+  return safeText(check.description, tr(`检查标识：${check.id}`, `Check identifier: ${check.id}`));
+}
+
+function getDomainLabel(domainId, rawName) {
+  const entry = DOMAIN_TRANSLATIONS[String(domainId || "").trim().toLowerCase()];
+  if (entry) {
+    return tr(entry.zh, entry.en);
+  }
+  return safeText(rawName, humanizeSlug(domainId));
+}
+
+function getCheckTranslation(check) {
+  return CHECK_TRANSLATIONS[String(check?.id || "").trim()] || null;
+}
+
+function getCheckDomainLabel(check) {
+  return getDomainLabel(check?.domain, check?.domain_name);
+}
+
+function displayCheckDescription(check) {
+  const entry = getCheckTranslation(check);
+  if (entry) {
+    return tr(entry.zhDescription, entry.enDescription);
+  }
+  return safeText(check.description, `Check ${check.id}`);
 }
 
 function getStageLabel(stageKey, stageLabel) {
   const stage = STAGES.find((item) => item.key === stageKey);
   if (stage) {
-    return stage.label;
+    return tr(stage.zh, stage.en);
   }
-  return safeText(stageLabel, "Queued");
+  return safeText(stageLabel, tr("排队中", "Queued"));
 }
 
 function safeText(value, fallback) {
@@ -2134,13 +3133,13 @@ function formatDuration(value) {
     return "--";
   }
   if (numeric < 1000) {
-    return `${numeric} ms`;
+    return tr(`${numeric} 毫秒`, `${numeric} ms`);
   }
   const seconds = numeric / 1000;
   if (seconds < 60) {
-    return `${seconds.toFixed(1)} s`;
+    return tr(`${seconds.toFixed(1)} 秒`, `${seconds.toFixed(1)} s`);
   }
-  return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+  return tr(`${Math.floor(seconds / 60)} 分 ${Math.round(seconds % 60)} 秒`, `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`);
 }
 
 function formatDate(value) {
@@ -2151,7 +3150,7 @@ function formatDate(value) {
   if (Number.isNaN(date.getTime())) {
     return String(value);
   }
-  return new Intl.DateTimeFormat("zh-CN", {
+  return new Intl.DateTimeFormat(getLanguageLocale(), {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -2176,10 +3175,10 @@ function getReleaseDisplayState() {
   if (state.releaseStatus === "checking") {
     return {
       pillClass: "status-queued",
-      pillLabel: "Checking",
-      metaText: "Checking the public release channel for the latest Windows installer.",
-      summaryText: "The workbench is querying the hosted release manifest so the local client can compare installed and published versions.",
-      buttonLabel: hasDownloadAsset() ? "Download Windows Client" : "Checking Release",
+      pillLabel: tr("检查中", "Checking"),
+      metaText: tr("正在检查公开发布通道中的最新 Windows 安装包。", "Checking the public release channel for the latest Windows installer."),
+      summaryText: tr("工作台正在查询线上发布清单，以便本地客户端比较当前安装版本和最新公开版本。", "The workbench is querying the hosted release manifest so the local client can compare installed and published versions."),
+      buttonLabel: hasDownloadAsset() ? tr("下载 Windows 客户端", "Download Windows Client") : tr("检查发布状态", "Checking Release"),
       version: releaseVersion || DOWNLOAD_ASSET.version || "--",
       filename: releaseFilename || DOWNLOAD_ASSET.filename || "--",
       sizeLabel: formatFileSize(releaseSizeBytes),
@@ -2192,10 +3191,10 @@ function getReleaseDisplayState() {
     if (comparison > 0) {
       return {
         pillClass: "status-partial",
-        pillLabel: "Update Available",
-        metaText: `Public release ${releaseVersion} is newer than the installed client ${APP_VERSION}.`,
-        summaryText: "Download the latest Windows client package before the next local scan if you want the newest workbench fixes and release metadata.",
-        buttonLabel: "Download Update",
+        pillLabel: tr("有可用更新", "Update Available"),
+        metaText: tr(`公开版本 ${releaseVersion} 比当前安装版本 ${APP_VERSION} 更新。`, `Public release ${releaseVersion} is newer than the installed client ${APP_VERSION}.`),
+        summaryText: tr("如果你想在下一次本地扫描前使用最新工作台修复和发布信息，请先下载最新 Windows 客户端。", "Download the latest Windows client package before the next local scan if you want the newest workbench fixes and release metadata."),
+        buttonLabel: tr("下载更新", "Download Update"),
         version: releaseVersion,
         filename: releaseFilename || "--",
         sizeLabel: formatFileSize(releaseSizeBytes),
@@ -2205,10 +3204,10 @@ function getReleaseDisplayState() {
     }
     return {
       pillClass: "status-success",
-      pillLabel: "Up To Date",
-      metaText: `Installed client ${APP_VERSION} matches the latest public release.`,
-      summaryText: "The release channel is healthy. Download links remain available for reinstall, peer deployment, or clean-room verification.",
-      buttonLabel: "Download Windows Client",
+      pillLabel: tr("已是最新", "Up To Date"),
+      metaText: tr(`当前安装版本 ${APP_VERSION} 与最新公开版本一致。`, `Installed client ${APP_VERSION} matches the latest public release.`),
+      summaryText: tr("发布通道状态正常。下载链接仍可用于重装、分发给同事或在隔离环境中做验证。", "The release channel is healthy. Download links remain available for reinstall, peer deployment, or clean-room verification."),
+      buttonLabel: tr("下载 Windows 客户端", "Download Windows Client"),
       version: releaseVersion,
       filename: releaseFilename || "--",
       sizeLabel: formatFileSize(releaseSizeBytes),
@@ -2220,10 +3219,10 @@ function getReleaseDisplayState() {
   if (hasDownloadAsset()) {
     return {
       pillClass: "status-running",
-      pillLabel: "Bundled",
-      metaText: `${DOWNLOAD_ASSET.filename} is attached to the current host.`,
-      summaryText: "The current environment can hand off a local installer package directly. Release manifest details were not available, so only the bundled file is shown.",
-      buttonLabel: "Download Windows Client",
+      pillLabel: tr("站点已挂载", "Bundled"),
+      metaText: tr(`${DOWNLOAD_ASSET.filename} 已挂载到当前站点。`, `${DOWNLOAD_ASSET.filename} is attached to the current host.`),
+      summaryText: tr("当前环境可以直接分发本地安装包。由于没有拿到线上发布清单，因此只展示站点自带文件。", "The current environment can hand off a local installer package directly. Release manifest details were not available, so only the bundled file is shown."),
+      buttonLabel: tr("下载 Windows 客户端", "Download Windows Client"),
       version: DOWNLOAD_ASSET.version || "--",
       filename: DOWNLOAD_ASSET.filename || "--",
       sizeLabel: formatFileSize(DOWNLOAD_ASSET.sizeBytes),
@@ -2234,12 +3233,12 @@ function getReleaseDisplayState() {
 
   return {
     pillClass: "status-neutral",
-    pillLabel: "Unavailable",
+    pillLabel: tr("不可用", "Unavailable"),
     metaText: state.releaseStatus === "unavailable"
-      ? "The public release channel could not be checked from this client session."
-      : "No release package detected yet.",
-    summaryText: "Build or publish the Windows installer to the public release channel so the website and local workbench can expose a stable download path.",
-    buttonLabel: "Installer Unavailable",
+      ? tr("当前客户端会话无法检查公开发布通道。", "The public release channel could not be checked from this client session.")
+      : tr("尚未检测到发布安装包。", "No release package detected yet."),
+    summaryText: tr("请把 Windows 安装包构建并发布到公开发布通道，这样网站和本地工作台才能提供稳定下载路径。", "Build or publish the Windows installer to the public release channel so the website and local workbench can expose a stable download path."),
+    buttonLabel: tr("安装包不可用", "Installer Unavailable"),
     version: "--",
     filename: "--",
     sizeLabel: "--",
@@ -2261,8 +3260,8 @@ function renderDownloadPanel() {
   const available = hasDownloadAsset() || Boolean(releaseState.downloadUrl);
   const url = releaseState.downloadUrl || (hasDownloadAsset() ? DOWNLOAD_ASSET.url : "#");
   const label = available
-    ? `Windows installer ${releaseState.version || DOWNLOAD_ASSET.version || ""}`.trim()
-    : "No installer package attached";
+    ? tr(`Windows 安装包 ${releaseState.version || DOWNLOAD_ASSET.version || ""}`.trim(), `Windows installer ${releaseState.version || DOWNLOAD_ASSET.version || ""}`.trim())
+    : tr("尚未挂载安装包", "No installer package attached");
 
   [topLink, heroLink].forEach((link) => {
     link.href = url;
@@ -2271,7 +3270,7 @@ function renderDownloadPanel() {
 
   heroMeta.textContent = available
     ? `${label} / ${releaseState.sizeLabel}`
-    : "Build dist/release/PoliceClaw-Setup-<version>.exe to expose a direct website download.";
+    : tr("请先构建 dist/release/PoliceClaw-Setup-<version>.exe，网站才会开放直接下载。", "Build dist/release/PoliceClaw-Setup-<version>.exe to expose a direct website download.");
 
   statusPill.className = `status-pill ${releaseState.pillClass}`;
   statusPill.textContent = releaseState.pillLabel;
@@ -2279,12 +3278,12 @@ function renderDownloadPanel() {
   panelMeta.textContent = releaseState.metaText;
   panelSummary.textContent = releaseState.summaryText;
   factList.innerHTML = [
-    ["Installed", APP_VERSION || "--"],
-    ["Latest", releaseState.version || DOWNLOAD_ASSET.version || "--"],
-    ["Package", releaseState.filename || DOWNLOAD_ASSET.filename || "--"],
-    ["Size", releaseState.sizeLabel],
-    ["Published", releaseState.publishedLabel],
-    ["Scope", "Local Windows client"],
+    [tr("已安装", "Installed"), APP_VERSION || "--"],
+    [tr("最新版本", "Latest"), releaseState.version || DOWNLOAD_ASSET.version || "--"],
+    [tr("安装包", "Package"), releaseState.filename || DOWNLOAD_ASSET.filename || "--"],
+    [tr("大小", "Size"), releaseState.sizeLabel],
+    [tr("发布时间", "Published"), releaseState.publishedLabel],
+    [tr("作用范围", "Scope"), tr("本地 Windows 客户端", "Local Windows client")],
   ].map(([labelText, value]) => `
     <div class="runtime-item">
       <span class="runtime-key">${escapeHtml(String(labelText))}</span>
@@ -2305,13 +3304,13 @@ function hasDownloadAsset() {
 function openDownloadAsset() {
   const releaseState = getReleaseDisplayState();
   if (!releaseState.downloadUrl && !hasDownloadAsset()) {
-    renderGlobalError("No Windows installer package is attached to the hosted site yet.", "Download Unavailable");
+    renderGlobalError(tr("当前站点还没有挂载 Windows 安装包。", "No Windows installer package is attached to the hosted site yet."), tr("下载不可用", "Download Unavailable"));
     return;
   }
   window.location.href = releaseState.downloadUrl || DOWNLOAD_ASSET.url;
 }
 
-async function requestJson(url, options = {}, fallbackMessage = "Request failed.") {
+async function requestJson(url, options = {}, fallbackMessage = tr("请求失败。", "Request failed.")) {
   let response;
   try {
     response = await fetch(url, {
@@ -2333,7 +3332,7 @@ function buildRequestHeaders(headers = {}) {
   return merged;
 }
 
-async function parseJson(response, fallbackMessage = "Request failed.") {
+async function parseJson(response, fallbackMessage = tr("请求失败。", "Request failed.")) {
   const rawText = await response.text();
   let payload = {};
   if (rawText) {

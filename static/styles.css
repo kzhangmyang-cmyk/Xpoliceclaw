@@ -167,6 +167,28 @@ a {
   border-bottom: 1px solid rgba(23, 32, 42, 0.16);
 }
 
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.language-switch .panel-meta {
+  white-space: nowrap;
+}
+
+.language-select {
+  min-width: 96px;
+  width: auto;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
 .primary-link {
   display: inline-flex;
   align-items: center;

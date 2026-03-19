@@ -73,7 +73,7 @@ manifest = {
     "installer_size_bytes": int(os.environ["POLICE_CLAW_MACOS_SIZE"]),
     "published_at": __import__("datetime").datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
     "minimum_os": "macOS 13",
-    "channel": "preview",
+    "channel": "stable",
     "status": "available",
     "notes": [
         "Runs the local Police Claw workbench on macOS and stores reports and history under Application Support.",

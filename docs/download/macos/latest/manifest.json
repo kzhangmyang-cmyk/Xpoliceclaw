@@ -10,7 +10,7 @@
   "installer_size_bytes": 15504206,
   "published_at": "2026-03-16T12:27:00Z",
   "minimum_os": "macOS 13",
-  "channel": "preview",
+  "channel": "stable",
   "status": "available",
   "notes": [
     "Runs the local Police Claw workbench on macOS and stores reports and history under Application Support.",

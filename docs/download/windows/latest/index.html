@@ -1,22 +1,324 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Police Claw Windows Download</title>
+  <title>Police Claw Windows 下载</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --paper: #f4f0e8;
+      --panel: rgba(255, 251, 245, 0.9);
+      --line: rgba(24, 32, 38, 0.12);
+      --ink: #182026;
+      --muted: #5b6670;
+      --teal: #176f6c;
+      --shadow: 0 18px 60px rgba(25, 35, 43, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: "Manrope", "Segoe UI Variable", "PingFang SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(35, 142, 136, 0.12), transparent 36%),
+        radial-gradient(circle at top right, rgba(164, 92, 24, 0.12), transparent 32%),
+        linear-gradient(135deg, #f4f0e8 0%, #edf5f1 48%, #f9efe6 100%);
+    }
+
+    main {
+      width: min(640px, calc(100vw - 32px));
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow,
+    .meta {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .language-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    select {
+      min-width: 108px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 10px;
+      color: var(--ink);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .primary,
+    .ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 18px;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--teal), #238e88);
+    }
+
+    .ghost {
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.64);
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .fact {
+      border-radius: 18px;
+      border: 1px solid rgba(24, 32, 38, 0.08);
+      background: rgba(255, 255, 255, 0.62);
+      padding: 14px;
+    }
+
+    strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 720px) {
+      .facts { grid-template-columns: 1fr; }
+    }
+  </style>
   <script>
-    (async () => {
-      try {
-        const response = await fetch("./manifest.json", { headers: { Accept: "application/json" } });
-        const manifest = await response.json();
-        if (manifest.available && manifest.download_url) {
-          window.location.replace(manifest.download_url);
+    (() => {
+      const LANGUAGE_STORAGE_KEY = "policeClawLocale";
+      const MANIFEST_URL = "./manifest.json";
+      const FALLBACK_RELEASE = "https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest";
+
+      const copy = {
+        zh: {
+          title: "Police Claw Windows 下载",
+          eyebrow: "公开下载",
+          heading: "Windows 客户端下载即将开始",
+          body: "此页面会先检查最新的 Windows 发布清单，然后自动跳转到 GitHub Releases 中的稳定安装包。",
+          statusChecking: "正在检查最新的 Windows 安装包。",
+          statusRedirecting: "已确认安装包可用，正在跳转。",
+          statusUnavailable: "暂时无法确认 Windows 安装包，请直接打开 GitHub Releases 查看。",
+          statusFailed: "获取 Windows 发布清单失败，请稍后重试或直接打开 GitHub Releases。",
+          actionDownload: "重新尝试下载",
+          actionRelease: "打开 GitHub Releases",
+          languageLabel: "语言",
+          factInstall: "交付形态",
+          factInstallValue: "Windows 安装包",
+          factExecution: "执行位置",
+          factExecutionValue: "本地客户端",
+          factBoundary: "自动处置边界",
+          factBoundaryValue: "保守型",
+        },
+        en: {
+          title: "Police Claw Windows Download",
+          eyebrow: "Public Download",
+          heading: "The Windows client download is about to start",
+          body: "This page checks the latest Windows release manifest first, then redirects to the stable installer on GitHub Releases.",
+          statusChecking: "Checking the latest Windows installer.",
+          statusRedirecting: "The installer is available. Redirecting now.",
+          statusUnavailable: "The Windows installer could not be confirmed. Open GitHub Releases directly.",
+          statusFailed: "The Windows release manifest could not be loaded. Try again later or open GitHub Releases directly.",
+          actionDownload: "Try download again",
+          actionRelease: "Open GitHub Releases",
+          languageLabel: "Language",
+          factInstall: "Package",
+          factInstallValue: "Windows Installer",
+          factExecution: "Execution",
+          factExecutionValue: "Local Client",
+          factBoundary: "Remediation Boundary",
+          factBoundaryValue: "Conservative",
+        },
+      };
+
+      const state = {
+        language: "zh",
+        manifest: null,
+      };
+
+      function resolveLanguage() {
+        try {
+          const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+          if (stored === "zh" || stored === "en") {
+            return stored;
+          }
+        } catch (error) {}
+        return String(navigator.language || "zh").toLowerCase().startsWith("en") ? "en" : "zh";
+      }
+
+      function t(key) {
+        return (copy[state.language] && copy[state.language][key]) || copy.zh[key] || key;
+      }
+
+      function applyCopy() {
+        document.documentElement.lang = state.language === "en" ? "en-US" : "zh-CN";
+        document.title = t("title");
+        document.getElementById("eyebrow").textContent = t("eyebrow");
+        document.getElementById("heading").textContent = t("heading");
+        document.getElementById("body").textContent = t("body");
+        document.getElementById("status").textContent = t("statusChecking");
+        document.getElementById("retry").textContent = t("actionDownload");
+        document.getElementById("release").textContent = t("actionRelease");
+        document.getElementById("languageLabel").textContent = t("languageLabel");
+        document.getElementById("factInstallLabel").textContent = t("factInstall");
+        document.getElementById("factInstallValue").textContent = t("factInstallValue");
+        document.getElementById("factExecutionLabel").textContent = t("factExecution");
+        document.getElementById("factExecutionValue").textContent = t("factExecutionValue");
+        document.getElementById("factBoundaryLabel").textContent = t("factBoundary");
+        document.getElementById("factBoundaryValue").textContent = t("factBoundaryValue");
+        document.getElementById("languageSelect").value = state.language;
+      }
+
+      function applyStatus(key) {
+        document.getElementById("status").textContent = t(key);
+      }
+
+      async function loadManifest() {
+        const response = await fetch(MANIFEST_URL, { headers: { Accept: "application/json" } });
+        if (!response.ok) {
+          throw new Error("manifest unavailable");
         }
-      } catch (error) {}
+        return response.json();
+      }
+
+      async function redirectToLatest() {
+        applyStatus("statusChecking");
+        try {
+          state.manifest = await loadManifest();
+          const downloadUrl = state.manifest && state.manifest.available && state.manifest.download_url;
+          if (downloadUrl) {
+            document.getElementById("retry").href = downloadUrl;
+            applyStatus("statusRedirecting");
+            window.location.replace(downloadUrl);
+            return;
+          }
+          applyStatus("statusUnavailable");
+        } catch (error) {
+          applyStatus("statusFailed");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        state.language = resolveLanguage();
+        applyCopy();
+        document.getElementById("release").href = FALLBACK_RELEASE;
+        document.getElementById("retry").addEventListener("click", (event) => {
+          if (state.manifest && state.manifest.available && state.manifest.download_url) {
+            return;
+          }
+          event.preventDefault();
+          redirectToLatest();
+        });
+        document.getElementById("languageSelect").addEventListener("change", (event) => {
+          state.language = event.target.value === "en" ? "en" : "zh";
+          try {
+            window.localStorage.setItem(LANGUAGE_STORAGE_KEY, state.language);
+          } catch (error) {}
+          applyCopy();
+        });
+        redirectToLatest();
+      });
     })();
   </script>
 </head>
 <body>
-  <p>Redirecting to the latest Police Claw Windows installer.</p>
+  <main>
+    <div class="topbar">
+      <div>
+        <div id="eyebrow" class="eyebrow">公开下载</div>
+      </div>
+      <label class="language-switch">
+        <span id="languageLabel" class="meta">语言</span>
+        <select id="languageSelect" aria-label="Language">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </div>
+
+    <h1 id="heading">Windows 客户端下载即将开始</h1>
+    <p id="body">此页面会先检查最新的 Windows 发布清单，然后自动跳转到 GitHub Releases 中的稳定安装包。</p>
+    <p id="status">正在检查最新的 Windows 安装包。</p>
+
+    <div class="actions">
+      <a id="retry" class="primary" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest">重新尝试下载</a>
+      <a id="release" class="ghost" href="https://github.com/kzhangmyang-cmyk/Xpoliceclaw/releases/latest">打开 GitHub Releases</a>
+    </div>
+
+    <div class="facts">
+      <div class="fact">
+        <div id="factInstallLabel" class="meta">交付形态</div>
+        <strong id="factInstallValue">Windows 安装包</strong>
+      </div>
+      <div class="fact">
+        <div id="factExecutionLabel" class="meta">执行位置</div>
+        <strong id="factExecutionValue">本地客户端</strong>
+      </div>
+      <div class="fact">
+        <div id="factBoundaryLabel" class="meta">自动处置边界</div>
+        <strong id="factBoundaryValue">保守型</strong>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
